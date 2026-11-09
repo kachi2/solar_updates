@@ -2,179 +2,99 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentMethod;
+use App\Exceptions\UserFacingException;
 use App\Http\Requests\AddressRequest;
 use App\Http\Requests\CheckoutRequest;
-use App\Models\AdminNotify;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Transaction;
-use App\Services\FlutterwaveService;
+use App\Repositories\AddressRepository;
+use App\Repositories\OrderRepository;
+use App\Services\AddressService;
+use App\Services\CheckoutService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        private readonly CheckoutService $checkout,
+        private readonly AddressService $addressService,
+        private readonly AddressRepository $addresses,
+        private readonly OrderRepository $orders,
+    ) {}
+
     /**
-     * Checkout page. As in the old app, visiting it snapshots the cart into
-     * order_items under a fresh order number that store() then uses.
+     * Checkout page (also snapshots the cart into order_items; see CheckoutService).
      */
     public function index(Request $request): View|RedirectResponse
     {
-        $cart = Cart::getContent();
-
-        if ($cart->isEmpty()) {
+        if ($this->checkout->cartIsEmpty()) {
             return redirect()->route('index');
         }
 
-        $orderNo = random_int(100000000, 999999999);
-
-        foreach ($cart as $item) {
-            OrderItem::create([
-                'order_No' => $orderNo,
-                'product_name' => $item->name,
-                'qty' => $item->quantity,
-                'price' => $item->price,
-                'image' => $item->model?->image,
-                'payable' => $item->quantity * $item->price,
-                'user_id' => $request->user()->id,
-            ]);
-        }
+        $this->checkout->snapshotCart($request->user());
 
         return view('users.products.checkout', [
-            'shipping' => $request->user()->shippings()->where('is_default', 1)->get(),
-            'cart' => $cart,
+            'shipping' => $this->addresses->defaultsFor($request->user()),
+            'cart' => Cart::getContent(),
         ]);
     }
 
     /**
-     * "Add address" modal on the checkout page.
+     * "Add address" pop-up on the checkout page.
      */
     public function storeAddress(AddressRequest $request): RedirectResponse
     {
-        $user = $request->user();
-
-        if ($request->boolean('default')) {
-            $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
-        }
-
-        $user->shippings()->create($request->shippingAttributes() + [
-            'is_default' => $request->boolean('default') ? 1 : 0,
-        ]);
+        $this->addressService->add($request->user(), $request->shippingAttributes(), $request->boolean('default'));
 
         return back()->with('success', 'Address Updated Successfully');
     }
 
     /**
-     * Place the order. Card payments continue to the Flutterwave page;
-     * other methods complete immediately (manual payment).
+     * Place the order: card orders continue to the Flutterwave page,
+     * pay-on-delivery orders are complete straight away.
      */
     public function store(Request $request): View|RedirectResponse
     {
-        $user = $request->user();
-        $latestItem = OrderItem::where('user_id', $user->id)->latest()->first();
-
-        if (! $latestItem) {
-            return redirect()->route('carts.index');
+        try {
+            $order = $this->checkout->placeOrder($request->user(), $request->input('payment_method'));
+        } catch (UserFacingException $e) {
+            return $this->failWith($e);
         }
 
-        if (Order::where('order_No', $latestItem->order_No)->exists()) {
-            return redirect()->route('checkout.index')
-                ->withErrors('Order number already exist, please check your order details and proceed with manual payment');
-        }
-
-        if (! $request->filled('payment_method')) {
-            return redirect()->route('checkout.index')->withErrors('Please select a payment method below');
-        }
-
-        $shipping = $user->shippings()->where('is_default', 1)->first();
-
-        if (! $shipping) {
-            return redirect()->route('checkout.index')->withErrors('Please select a default Address');
-        }
-
-        $order = Order::create([
-            'user_id' => $user->id,
-            'order_No' => $latestItem->order_No,
-            'payment_method' => $request->input('payment_method'),
-            'is_paid' => 0,
-            'is_delivered' => 0,
-            'amount' => Cart::getSubTotal(false),
-            'shipping_id' => $shipping->id,
-        ]);
-
-        if ($request->input('payment_method') === 'card') {
+        if ($order->payment_method === PaymentMethod::Card->value) {
             return view('users.products.checkouts', [
-                'address' => $shipping,
+                'address' => $this->addresses->defaultFor($request->user()),
                 'cart' => Cart::getContent(),
                 'order' => $order,
-                'flutterwavePublicKey' => config('services.flutterwave.public_key'),
             ]);
         }
 
-        Cart::clear();
-        AdminNotify::create(['message' => 'New customer order completed Order No: '.$order->order_No]);
         session()->flash('success', 'Order was sent successfully');
 
         return view('users.products.orders', [
-            'items' => OrderItem::where('order_No', $order->order_No)->get(),
+            'items' => $this->orders->items($order->order_No),
             'orders' => $order,
             'success' => 'Order was sent successfully',
         ]);
     }
 
     /**
-     * Flutterwave callback: verify the transaction server-side before marking
-     * the customer's latest unpaid order as paid.
+     * Flutterwave callback.
      */
-    public function verify(Request $request, string $transactionId, FlutterwaveService $flutterwave): View|RedirectResponse
+    public function verify(Request $request, string $transactionId): View|RedirectResponse
     {
-        $user = $request->user();
-        $transaction = $flutterwave->verifyTransaction($transactionId);
-
-        if (! $transaction) {
-            return redirect()->route('checkout.index')->withErrors('Transaction not found, Please contact support');
+        try {
+            $order = $this->checkout->confirmCardPayment($request->user(), $transactionId);
+        } catch (UserFacingException $e) {
+            return $this->failWith($e);
         }
 
-        if (Transaction::where('external_ref', $transaction['flw_ref'] ?? '')->exists()) {
-            return redirect()->route('users.orders')->with('success', 'This payment has already been confirmed');
-        }
-
-        $order = Order::where('user_id', $user->id)->where('is_paid', 0)->latest()->first();
-
-        if (! $order || ! $flutterwave->isSuccessfulPayment($transaction, (float) $order->amount)) {
-            return redirect()->route('checkout.index')
-                ->withErrors('Your payment was not successful. Something went wrong.');
-        }
-
-        DB::transaction(function () use ($user, $order, $transaction) {
-            Transaction::create([
-                'user_id' => $user->id,
-                'payment_ref' => $transaction['tx_ref'],
-                'type' => 'payment for',
-                'payment_method' => 'card',
-                'external_ref' => $transaction['flw_ref'],
-                'amount' => $transaction['amount'],
-                'order_No' => $order->order_No,
-            ]);
-
-            $order->update([
-                'payment_ref' => $transaction['tx_ref'],
-                'external_ref' => $transaction['flw_ref'],
-                'is_paid' => 1,
-                'amount' => $transaction['amount'],
-            ]);
-
-            AdminNotify::create(['message' => 'New customer order completed <br>Order No'.$order->order_No]);
-        });
-
-        Cart::clear();
         session()->flash('success', 'Order was sent successfully');
 
         return view('users.products.completed', [
-            'items' => OrderItem::where('order_No', $order->order_No)->get(),
+            'items' => $this->orders->items($order->order_No),
             'orders' => $order,
             'success' => 'Order completed successfully',
         ]);
@@ -193,14 +113,13 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Save the address from addNew(). The old app rendered a
-     * `users.products.payment` view that never existed; this returns to checkout.
+     * Save the address from addNew() and return to checkout.
      */
     public function add(CheckoutRequest $request): RedirectResponse
     {
-        $request->user()->shippings()->create($request->validated());
+        $this->addressService->add($request->user(), $request->validated());
 
-        if (Cart::getContent()->isEmpty()) {
+        if ($this->checkout->cartIsEmpty()) {
             return redirect()->route('carts.index');
         }
 
@@ -222,7 +141,9 @@ class CheckoutController extends Controller
             'zip_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $request->user()->shippings()->findOrFail($this->decryptId($checkout))->update($validated);
+        $user = $request->user();
+        $address = $this->addresses->findForOrFail($user, $this->decryptId($checkout));
+        $this->addressService->update($user, $address, $validated);
 
         return back()->with('message', 'Address Updated');
     }

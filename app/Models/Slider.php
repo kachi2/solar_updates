@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImage;
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Slider extends Model
 {
-    use HasFactory;
+    use HasFactory, HasImage;
 
     protected $table = 'sliders';
 
@@ -15,4 +17,9 @@ class Slider extends Model
         'name',
         'image',
     ];
+
+    protected function imageFolder(): string
+    {
+        return Media::SLIDERS;
+    }
 }

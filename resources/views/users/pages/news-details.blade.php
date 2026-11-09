@@ -1,8 +1,9 @@
 @extends('layouts.app')
+@use('App\Support\Media')
 @section('title', $news->title.' · ')
 @section('content')
 @php
-    $imageUrl = fn ($file) => asset('images/news/'.rawurlencode((string) $file));
+    $imageUrl = fn ($file) => Media::url(Media::NEWS, $file);
     // Extra photos (the gallery field often repeats the cover image).
     $extraPhotos = collect(json_decode((string) $news->images, true) ?: [])
         ->filter()

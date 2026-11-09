@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@use('App\Support\Media')
 @section('title', $project->title.' · ')
 @section('content')
 @php
@@ -7,7 +8,7 @@
         ->filter()
         ->unique()
         ->values();
-    $photoUrl = fn ($file) => asset('images/projects/'.rawurlencode((string) $file));
+    $photoUrl = fn ($file) => Media::url(Media::PROJECTS, $file);
     $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='
         .rawurlencode("Hello Sofar Solar, I saw your project \"{$project->title}\" and I'd like a quote for something similar.");
 @endphp
@@ -63,7 +64,7 @@
                         <a href="{{ $whatsappUrl }}" class="sofar-footer__whatsapp sofar-project__whatsapp" target="_blank" rel="noopener">
                             <i class="fab fa-whatsapp" aria-hidden="true"></i> Chat with us on WhatsApp
                         </a>
-                        <a href="tel:+2348135324241" class="sofar-project__call"><i class="fas fa-phone-alt" aria-hidden="true"></i> 0813 532 4241</a>
+                        <a href="tel:{{ config('sofar.contact.phones.0.tel') }}" class="sofar-project__call"><i class="fas fa-phone-alt" aria-hidden="true"></i> {{ config('sofar.contact.phones.0.display') }}</a>
                     </div>
                     <a href="{{ route('pages', 'projects') }}" class="sofar-cart__continue sofar-project__back">← All projects</a>
                 </aside>

@@ -2,11 +2,9 @@
 
 namespace App\View\Composers;
 
-use App\Models\AdminNotify;
-use App\Models\Category;
-use App\Models\CurrencyExchange;
-use App\Models\Menu;
-use App\Models\Product;
+use App\Repositories\CategoryRepository;
+use App\Repositories\ContentRepository;
+use App\Repositories\NotificationRepository;
 use Illuminate\View\View;
 
 /**
@@ -17,6 +15,12 @@ class SharedViewDataComposer
 {
     /** @var array<string, mixed>|null */
     private ?array $data = null;
+
+    public function __construct(
+        private readonly ContentRepository $content,
+        private readonly CategoryRepository $categories,
+        private readonly NotificationRepository $notifications,
+    ) {}
 
     /**
      * Only fills keys the page did not set itself (e.g. the menu edit page
@@ -37,13 +41,12 @@ class SharedViewDataComposer
     private function data(): array
     {
         return $this->data ??= [
-            // A menu item without a slug can't be linked, so it is skipped rather than breaking every page.
-            'menu' => Menu::whereNotNull('slug')->where('slug', '!=', '')->get(),
-            'menu_categories' => Category::withCount('products')->get(),
-            'product_menu' => Product::where('status', '!=', 1)->get(),
-            'unread_notify' => AdminNotify::where('is_read', 0)->latest()->take(10)->get(),
-            'read_notify' => AdminNotify::where('is_read', 1)->latest()->take(2)->get(),
-            'dollar_exchange_rate' => CurrencyExchange::first(),
+            // Menu items without a slug are skipped rather than breaking every page.
+            'menu' => $this->content->linkableMenus(),
+            'menu_categories' => $this->categories->allWithProductCounts(),
+            'unread_notify' => $this->notifications->unreadAdminAlerts(10),
+            'read_notify' => $this->notifications->readAdminAlerts(2),
+            'dollar_exchange_rate' => $this->content->exchangeRate(),
         ];
     }
 }

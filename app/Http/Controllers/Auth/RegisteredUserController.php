@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdminNotify;
-use App\Models\Notification;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +30,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, NotificationService $notifications): RedirectResponse
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -40,7 +39,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = DB::transaction(function () use ($request) {
+        $user = DB::transaction(function () use ($request, $notifications) {
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -48,13 +47,7 @@ class RegisteredUserController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            Notification::create([
-                'user_id' => $user->id,
-                'title' => 'welcome to sofarsolar',
-                'message' => 'Dear '.$user->name.', <br>We are glad to have you with us, do enjoy our services',
-            ]);
-
-            AdminNotify::create(['message' => 'New Customer Registered']);
+            $notifications->welcome($user);
 
             return $user;
         });

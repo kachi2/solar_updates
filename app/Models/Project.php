@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImage;
 use App\Models\Concerns\HasSlug;
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
-    use HasFactory, HasSlug;
+    use HasFactory, HasImage, HasSlug;
 
     protected $table = 'projects';
 
@@ -26,4 +28,9 @@ class Project extends Model
         'image',
         'images',
     ];
+
+    protected function imageFolder(): string
+    {
+        return Media::PROJECTS;
+    }
 }

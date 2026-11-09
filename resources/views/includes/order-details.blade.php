@@ -4,14 +4,6 @@
 --}}
 @php
     $shipping = $order->shipping;
-    $isPaid = (int) $order->is_paid === 1;
-    $isDelivered = (int) $order->is_delivered === 1;
-    $isDispatched = (int) $order->dispatch_status === 1;
-    $methodLabel = match ($order->payment_method) {
-        'card' => 'Card (Flutterwave)',
-        'cash_delivery' => 'Pay on delivery',
-        default => $order->payment_method ? \Illuminate\Support\Str::headline($order->payment_method) : '—',
-    };
     $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='
         .rawurlencode('Hello Sofar Solar, I have a question about order #'.$order->order_No.'.');
 @endphp
@@ -22,12 +14,7 @@
             <p class="sofar-order__date">Placed {{ $order->created_at?->format('j M Y, g:i a') }}</p>
         </div>
         <div class="sofar-order__badges">
-            <span @class(['sofar-status', 'sofar-status--ok' => $isPaid, 'sofar-status--wait' => ! $isPaid])>
-                {{ $isPaid ? 'Paid' : 'Awaiting payment' }}
-            </span>
-            <span @class(['sofar-status', 'sofar-status--ok' => $isDelivered, 'sofar-status--info' => ! $isDelivered && $isDispatched, 'sofar-status--wait' => ! $isDelivered && ! $isDispatched])>
-                {{ $isDelivered ? 'Delivered' : ($isDispatched ? 'Dispatched' : 'Processing') }}
-            </span>
+            @include('includes.order-status-badges', ['order' => $order])
         </div>
     </header>
 
@@ -37,7 +24,7 @@
             <li class="sofar-order__item">
                 <span class="sofar-order__thumb">
                     @if ($item->image)
-                        <img src="{{ asset('images/products/'.rawurlencode((string) $item->image)) }}" alt="" loading="lazy">
+                        <img src="{{ $item->image_url }}" alt="" loading="lazy">
                     @else
                         <i class="ec ec-shopping-bag" aria-hidden="true"></i>
                     @endif
@@ -84,9 +71,9 @@
             <div class="sofar-order__box">
                 <h2 class="sofar-order__box-title">Payment</h2>
                 <dl class="sofar-order__facts">
-                    <div><dt>Method</dt><dd>{{ $methodLabel }}</dd></div>
+                    <div><dt>Method</dt><dd>{{ $order->paymentMethodLabel() }}</dd></div>
                     <div><dt>Amount</dt><dd>₦{{ number_format((float) $order->amount) }}</dd></div>
-                    <div><dt>Status</dt><dd>{{ $isPaid ? 'Paid' : 'Awaiting payment' }}</dd></div>
+                    <div><dt>Status</dt><dd>{{ $order->paymentStatus()->label() }}</dd></div>
                     @if ($order->payment_ref)
                         <div><dt>Reference</dt><dd>{{ $order->payment_ref }}</dd></div>
                     @endif

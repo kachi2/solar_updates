@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\ProductVariation;
+use App\Repositories\ProductRepository;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +12,8 @@ use Illuminate\View\View;
 
 class CartController extends Controller
 {
+    public function __construct(private readonly ProductRepository $products) {}
+
     public function index(): View
     {
         return view('users.products.carts', [
@@ -22,7 +24,7 @@ class CartController extends Controller
 
     public function add(Request $request, string $id): JsonResponse
     {
-        $product = Product::findOrFail($id);
+        $product = $this->products->findOrFail($id);
 
         $validated = $request->validate([
             'qty' => ['required', 'integer', 'min:1'],
@@ -64,12 +66,10 @@ class CartController extends Controller
             'rowId' => ['required'],
         ]);
 
-        $variation = ProductVariation::where('product_id', $this->decryptId($cart))
-            ->where('qty', $validated['qty'])
-            ->first();
+        $tierPrice = $this->products->variationPrice($this->decryptId($cart), (int) $validated['qty']);
 
         Cart::update($validated['rowId'], array_filter([
-            'price' => $variation?->price,
+            'price' => $tierPrice,
             'quantity' => ['relative' => false, 'value' => $validated['qty']],
         ], fn ($value) => $value !== null));
 

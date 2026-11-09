@@ -51,10 +51,10 @@
                                         @if ($transaction->order_No)
                                             Payment for
                                             <a href="{{ route('users.order-details', encrypt($transaction->order_No)) }}">order #{{ $transaction->order_No }}</a>
-                                            <small>{{ $transaction->payment_method === 'card' ? 'Card' : \Illuminate\Support\Str::headline((string) $transaction->payment_method) }}</small>
+                                            <small>{{ $transaction->paymentMethodLabel() }}</small>
                                         @else
                                             {{-- Older payments were saved without an order number. --}}
-                                            {{ $transaction->type === 'credit' ? 'Account credit' : 'Card payment' }}
+                                            {{ $transaction->transactionType()->label() }}
                                         @endif
                                     </span>
                                     <span class="sofar-tx__ref">

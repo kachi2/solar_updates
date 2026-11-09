@@ -2,33 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\UserFacingException;
 use App\Http\Requests\AccountDetailsRequest;
 use App\Http\Requests\AddressRequest;
 use App\Http\Requests\ReviewRequest;
-use App\Models\Category;
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\Review;
-use App\Models\Slider;
-use App\Models\Transaction;
+use App\Repositories\AddressRepository;
+use App\Repositories\CategoryRepository;
+use App\Repositories\ContentRepository;
+use App\Repositories\NotificationRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\ReviewRepository;
+use App\Repositories\TransactionRepository;
+use App\Services\AddressService;
+use App\Services\RecentlyViewedProducts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        private readonly ProductRepository $products,
+        private readonly CategoryRepository $categories,
+        private readonly RecentlyViewedProducts $recentlyViewed,
+    ) {}
+
     // ---- Shop -----------------------------------------------------------
 
-    public function index(): View
+    public function index(ContentRepository $content): View
     {
         return view('users.home', [
-            'recents' => $this->recentlyViewed(5),
+            'recents' => $this->recentlyViewed->latest(5),
             'title' => 'Index',
-            'products' => Product::latest()->simplePaginate(50),
-            'sliders' => Slider::all(),
-            'categories' => Category::take(4)->get(),
+            'products' => $this->products->latestPaginated(config('sofar.per_page.home_products')),
+            'sliders' => $content->sliders(),
+            'categories' => $this->categories->featured(4),
         ]);
     }
 
@@ -37,25 +47,22 @@ class HomeController extends Controller
      */
     public function legacyProductDetails(string $id): RedirectResponse
     {
-        $product = Product::findOrFail($this->decryptId($id));
-
-        return redirect()->route('product-details', $product, 301);
+        return redirect()->route('product-details', $this->products->findOrFail($this->decryptId($id)), 301);
     }
 
-    public function productDetails(Product $product): View
+    public function productDetails(Product $product, ReviewRepository $reviews): View
     {
-        session()->push('products.recently_viewed', $product->getKey());
-        // `views` can be NULL in legacy rows, so don't use increment() (NULL + 1 = NULL in SQL).
-        $product->update(['views' => (int) $product->views + 1]);
+        $this->recentlyViewed->remember($product);
+        $this->products->recordView($product);
 
-        $reviews = Review::where('product_id', $product->id);
+        $summary = $reviews->summaryFor($product);
 
         return view('users.products.products', [
-            'rating' => (clone $reviews)->latest()->take(3)->get(),
-            'reviewCount' => (clone $reviews)->count(),
-            'averageRating' => round((float) (clone $reviews)->avg('rating'), 1),
-            'recent' => $this->recentlyViewed(4),
-            'related' => Product::where('category_id', $product->category_id)->whereKeyNot($product->id)->take(4)->get(),
+            'rating' => $reviews->latestFor($product, 3),
+            'reviewCount' => $summary['count'],
+            'averageRating' => $summary['average'],
+            'recent' => $this->recentlyViewed->latest(4),
+            'related' => $this->products->related($product, 4),
             'title' => $product->name,
             'product' => $product,
             'breadcrumb' => $product->name,
@@ -69,14 +76,14 @@ class HomeController extends Controller
     public function category(string $category): View|RedirectResponse
     {
         if (str_starts_with($category, 'eyJ')) {
-            return redirect()->route('user.category', Category::findOrFail($this->decryptId($category)), 301);
+            return redirect()->route('user.category', $this->categories->findOrFail($this->decryptId($category)), 301);
         }
 
-        $category = Category::where('slug', $category)->firstOrFail();
+        $category = $this->categories->findBySlugOrFail($category);
 
         return view('users.pages.products', [
-            'products' => Product::where('category_id', $category->id)->simplePaginate(20),
-            'prod' => Product::latest()->take(5)->get(),
+            'products' => $this->products->inCategory($category, config('sofar.per_page.shop')),
+            'prod' => $this->products->latest(5),
             'currentCategory' => $category,
         ]);
     }
@@ -86,15 +93,15 @@ class HomeController extends Controller
         $search = (string) $request->query('search', '');
 
         return view('users.pages.products', [
-            'products' => Product::where('name', 'like', '%'.$search.'%')->simplePaginate(18)->withQueryString(),
-            'prod' => Product::latest()->take(5)->get(),
+            'products' => $this->products->search($search, config('sofar.per_page.search')),
+            'prod' => $this->products->latest(5),
             'search' => $search,
         ]);
     }
 
-    public function addReview(ReviewRequest $request, Product $product): RedirectResponse
+    public function addReview(ReviewRequest $request, Product $product, ReviewRepository $reviews): RedirectResponse
     {
-        Review::create([
+        $reviews->create([
             'product_id' => $product->id,
             'name' => $request->input('name'),
             'email' => $request->input('email'),
@@ -108,14 +115,14 @@ class HomeController extends Controller
 
     // ---- Account --------------------------------------------------------
 
-    public function account(Request $request): View
+    public function account(Request $request, AddressRepository $addresses, OrderRepository $orders): View
     {
         $user = $request->user();
 
         return view('users.accounts.index', [
-            'addresses' => $user->shippings()->where('is_default', 1)->get(),
-            'recentOrders' => Order::where('user_id', $user->id)->with('items')->latest()->take(3)->get(),
-            'orderCount' => Order::where('user_id', $user->id)->count(),
+            'addresses' => $addresses->defaultsFor($user),
+            'recentOrders' => $orders->recentForUser($user, 3),
+            'orderCount' => $orders->countForUser($user),
             'title' => 'My Details',
         ]);
     }
@@ -139,79 +146,76 @@ class HomeController extends Controller
         return back()->with('success', 'Details Updated Successfully');
     }
 
-    public function myOrders(Request $request): View
+    public function myOrders(Request $request, OrderRepository $orders): View
     {
-        // One row per order (the old join listed every order line separately).
-        $orders = Order::where('user_id', $request->user()->id)
-            ->with('items')
-            ->latest()
-            ->paginate(10);
-
-        return view('users.accounts.orders', compact('orders'));
+        return view('users.accounts.orders', [
+            'orders' => $orders->paginateForUser($request->user(), config('sofar.per_page.orders')),
+        ]);
     }
 
-    public function orderDetails(Request $request, string $id): View
+    public function orderDetails(Request $request, string $id, OrderRepository $orders): View
     {
         $orderNo = $this->decryptId($id);
 
         return view('users.accounts.orderDetails', [
-            'orders' => Order::where('order_No', $orderNo)->where('user_id', $request->user()->id)->firstOrFail(),
-            'items' => OrderItem::where('order_No', $orderNo)->where('user_id', $request->user()->id)->get(),
+            'orders' => $orders->findForUserOrFail($request->user(), $orderNo),
+            'items' => $orders->itemsForUser($request->user(), $orderNo),
         ]);
     }
 
-    public function myTransactions(Request $request): View
+    public function myTransactions(Request $request, TransactionRepository $transactions): View
     {
         return view('users.accounts.transactions', [
-            'transactions' => Transaction::where('user_id', $request->user()->id)->latest()->simplePaginate(10),
+            'transactions' => $transactions->paginateForUser($request->user(), config('sofar.per_page.payments')),
             'user' => $request->user(),
         ]);
     }
 
     public function recentViews(): View
     {
-        return view('users.accounts.recent-view', ['recent' => $this->recentlyViewed(10)]);
+        return view('users.accounts.recent-view', ['recent' => $this->recentlyViewed->latest(10)]);
     }
 
-    public function notifications(Request $request): View
+    public function notifications(Request $request, NotificationRepository $notifications): View
     {
         $request->user()->update(['notifyCount' => 0]);
 
         return view('users.accounts.notify', [
-            'notify' => $request->user()->userNotifications()->latest()->get(),
+            'notify' => $notifications->forUser($request->user()),
         ]);
     }
 
-    public function deleteNotification(Request $request, string $id): RedirectResponse
+    public function deleteNotification(Request $request, string $id, NotificationRepository $notifications): RedirectResponse
     {
-        $request->user()->userNotifications()->whereKey($this->decryptId($id))->delete();
+        $notifications->deleteForUser($request->user(), $this->decryptId($id));
 
         return back();
     }
 
     // ---- Address book ---------------------------------------------------
 
-    public function addresses(Request $request): View
+    public function addresses(Request $request, AddressRepository $addresses): View
     {
         return view('users.accounts.address', [
-            // Default address first, then newest.
-            'addresses' => $request->user()->shippings()->orderByDesc('is_default')->latest()->paginate(12),
+            'addresses' => $addresses->paginateFor($request->user(), config('sofar.per_page.addresses')),
             'title' => 'My Details',
         ]);
     }
 
-    public function createAddress(Request $request): View
+    public function createAddress(Request $request, AddressRepository $addresses): View
     {
         return view('users.accounts.add-address', [
-            'addresses' => $request->user()->shippings()->get(),
+            'addresses' => $addresses->allFor($request->user()),
         ]);
     }
 
-    public function editAddress(Request $request, string $id): View
+    public function editAddress(Request $request, string $id, AddressRepository $addresses, AddressService $addressService): View
     {
+        $user = $request->user();
+
         return view('users.accounts.update-address', [
-            'addresses' => $request->user()->shippings()->whereKey($this->decryptId($id))->get()->whenEmpty(fn () => abort(404)),
-            'canRemove' => $request->user()->shippings()->count() > 1,
+            'addresses' => collect([$addresses->findForOrFail($user, $this->decryptId($id))]),
+            'canRemove' => $addressService->canRemove($user),
         ]);
     }
 
@@ -219,85 +223,41 @@ class HomeController extends Controller
      * Create an address, or update one when the form sends `update`.
      * The {id} segment is the address id when updating (old URL shape kept).
      */
-    public function saveAddress(AddressRequest $request, string $id): RedirectResponse
+    public function saveAddress(AddressRequest $request, string $id, AddressRepository $addresses, AddressService $addressService): RedirectResponse
     {
         $user = $request->user();
 
-        $hasDefault = $user->shippings()->where('is_default', 1)->exists();
-
         if ($request->filled('update')) {
-            $address = $user->shippings()->findOrFail($id);
-            $address->fill($request->shippingAttributes());
-
-            // Making this the default unsets the old one. The current default stays
-            // default until another address is chosen, so checkout always has one.
-            if ($request->boolean('default') && (int) $address->is_default !== 1) {
-                $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
-                $address->is_default = 1;
-            }
-
-            $address->save();
+            $address = $addresses->findForOrFail($user, $id);
+            $addressService->update($user, $address, $request->shippingAttributes(), $request->boolean('default'));
 
             return redirect()->route('users.address')->with('success', 'Address updated.');
         }
 
-        $makeDefault = $request->boolean('default') || ! $hasDefault;
-
-        if ($makeDefault) {
-            $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
-        }
-
-        $user->shippings()->create($request->shippingAttributes() + ['is_default' => $makeDefault ? 1 : 0]);
+        $addressService->add($user, $request->shippingAttributes(), $request->boolean('default'));
 
         return redirect()->route('users.address')->with('success', 'Address added.');
     }
 
-    public function deleteAddress(Request $request, string $id): RedirectResponse
+    public function deleteAddress(Request $request, string $id, AddressRepository $addresses, AddressService $addressService): RedirectResponse
     {
         $user = $request->user();
-        $address = $user->shippings()->findOrFail($this->decryptId($id));
+        $address = $addresses->findForOrFail($user, $this->decryptId($id));
 
-        // Checkout needs an address, so the last one can't be removed.
-        if ($user->shippings()->count() <= 1) {
-            return redirect()->route('users.address')
-                ->with('error', 'You need at least one delivery address. Add another address before removing this one.');
-        }
-
-        $wasDefault = (int) $address->is_default === 1;
-        $address->delete();
-
-        // Checkout needs a default address: promote the newest remaining one.
-        if ($wasDefault) {
-            $user->shippings()->latest()->first()?->update(['is_default' => 1]);
+        try {
+            $addressService->remove($user, $address);
+        } catch (UserFacingException $e) {
+            return $this->failWith($e);
         }
 
         return back()->with('success', 'Address removed.');
     }
 
-    public function setDefaultAddress(Request $request, string $id): RedirectResponse
+    public function setDefaultAddress(Request $request, string $id, AddressRepository $addresses, AddressService $addressService): RedirectResponse
     {
         $user = $request->user();
-        $address = $user->shippings()->findOrFail($this->decryptId($id));
-
-        $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
-        $address->update(['is_default' => 1]);
+        $addressService->setDefault($user, $addresses->findForOrFail($user, $this->decryptId($id)));
 
         return back()->with('success', 'Default delivery address updated.');
-    }
-
-    /**
-     * Products the visitor viewed most recently (stored in the session).
-     *
-     * @return Collection<int, Product>|array{}
-     */
-    private function recentlyViewed(int $limit): Collection|array
-    {
-        $ids = session('products.recently_viewed');
-
-        if (! is_array($ids) || $ids === []) {
-            return [];
-        }
-
-        return Product::whereIn('id', array_slice(array_unique($ids), -$limit, $limit))->latest()->take($limit)->get();
     }
 }

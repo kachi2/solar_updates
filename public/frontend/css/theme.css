@@ -39907,6 +39907,11 @@ blockquote:not(.blockquote) p {
   color: #8a5a00;
 }
 
+.sofar-status--danger {
+  background-color: #fdeceb;
+  color: #b42318;
+}
+
 .sofar-order__items {
   margin: 0;
   padding: 0;

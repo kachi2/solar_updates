@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\Visibility;
+use App\Models\Concerns\HasImage;
 use App\Models\Concerns\HasSlug;
+use App\Support\Media;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    use HasFactory, HasSlug;
+    use HasFactory, HasImage, HasSlug;
 
     protected $table = 'products';
 
@@ -41,6 +45,19 @@ class Product extends Model
         ];
     }
 
+    /**
+     * Products not disabled in the admin (see Visibility).
+     */
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', Visibility::Hidden->value));
+    }
+
+    public function visibility(): Visibility
+    {
+        return Visibility::fromLegacy($this->status);
+    }
+
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class, 'sub_category_id');
@@ -64,5 +81,10 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'product_id');
+    }
+
+    protected function imageFolder(): string
+    {
+        return Media::PRODUCTS;
     }
 }

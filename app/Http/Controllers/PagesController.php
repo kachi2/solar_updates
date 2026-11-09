@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Visibility;
 use App\Http\Requests\Admin\NameRequest;
 use App\Http\Requests\Admin\SliderRequest;
-use App\Models\ContactUs;
 use App\Models\Menu;
 use App\Models\News;
-use App\Models\Product;
 use App\Models\Project;
 use App\Models\Slider;
+use App\Repositories\ContentRepository;
+use App\Repositories\ProductRepository;
 use App\Services\ImageUploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -98,62 +99,61 @@ class PagesController extends Controller
 
     // ---- Public pages -------------------------------------------------------
 
-    public function show(string $slug): mixed
+    public function show(string $slug, ContentRepository $content, ProductRepository $products): mixed
     {
         return match ($slug) {
-            'home' => app(HomeController::class)->index(),
+            'home' => app()->call([app(HomeController::class), 'index']),
             'projects' => view('users.pages.projects', [
-                'projects' => Project::latest()->get(),
+                'projects' => $content->projects(),
             ]),
             'products' => view('users.pages.products', [
-                'prod' => Product::latest()->take(5)->get(),
-                'pro' => Product::orderBy('sale_price')->take(10)->get(),
-                'products' => Product::latest()->paginate(20),
+                'prod' => $products->latest(5),
+                'pro' => $products->cheapest(10),
+                'products' => $products->latestLengthAware(config('sofar.per_page.shop')),
             ]),
             'news' => view('users.pages.news', [
-                // status 1 = disabled in the admin (NewsController::status).
-                'news' => News::published()->latest()->get(),
+                'news' => $content->publishedNews(),
             ]),
             'contacts' => view('users.pages.contact', [
-                'contact' => ContactUs::latest()->first(),
+                'contact' => $content->contactDetails(),
             ]),
             // The old app linked an "about" page but never had its view.
             default => abort(404),
         };
     }
 
-    public function newsDetails(News $news): View
+    public function newsDetails(News $news, ContentRepository $content): View
     {
         // Articles disabled in the admin are not public.
-        abort_if((int) $news->status === 1, 404);
+        abort_if($news->visibility() === Visibility::Hidden, 404);
 
         return view('users.pages.news-details', [
             'news' => $news,
-            'moreNews' => News::published()->whereKeyNot($news->id)->latest()->take(3)->get(),
+            'moreNews' => $content->moreNews($news, 3),
         ]);
     }
 
     /**
      * Old /news/details/{encrypted id} links → 301 to /news/{slug}.
      */
-    public function legacyNewsDetails(string $id): RedirectResponse
+    public function legacyNewsDetails(string $id, ContentRepository $content): RedirectResponse
     {
-        return redirect()->route('news.details', News::findOrFail($this->decryptId($id)), 301);
+        return redirect()->route('news.details', $content->findNewsOrFail($this->decryptId($id)), 301);
     }
 
-    public function projectsDetails(Project $project): View
+    public function projectsDetails(Project $project, ContentRepository $content): View
     {
         return view('users.pages.project-details', [
             'project' => $project,
-            'moreProjects' => Project::whereKeyNot($project->id)->latest()->take(3)->get(),
+            'moreProjects' => $content->moreProjects($project, 3),
         ]);
     }
 
     /**
      * Old /projects/details/{encrypted id} links → 301 to /project/{slug}.
      */
-    public function legacyProjectDetails(string $id): RedirectResponse
+    public function legacyProjectDetails(string $id, ContentRepository $content): RedirectResponse
     {
-        return redirect()->route('projects.details', Project::findOrFail($this->decryptId($id)), 301);
+        return redirect()->route('projects.details', $content->findProjectOrFail($this->decryptId($id)), 301);
     }
 }

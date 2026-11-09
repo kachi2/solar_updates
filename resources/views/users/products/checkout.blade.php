@@ -1,4 +1,6 @@
 @extends('layouts.app')
+@use('App\Support\Media')
+@use('App\Enums\PaymentMethod')
 @section('title', 'Checkout · ')
 @section('content')
 @php
@@ -71,7 +73,7 @@
 
                         <div class="sofar-checkout-methods" role="radiogroup" aria-label="Payment method">
                             <label class="sofar-checkout-method">
-                                <input type="radio" name="payment_method" value="card" required @checked($selectedMethod === 'card')>
+                                <input type="radio" name="payment_method" value="{{ PaymentMethod::Card->value }}" required @checked($selectedMethod === PaymentMethod::Card->value)>
                                 <span class="sofar-checkout-method__body">
                                     <span class="sofar-checkout-method__name">Pay with card</span>
                                     <span class="sofar-checkout-method__desc">Visa, Mastercard or Verve, paid securely through Flutterwave.</span>
@@ -80,7 +82,7 @@
                             </label>
 
                             <label class="sofar-checkout-method">
-                                <input type="radio" name="payment_method" value="cash_delivery" required @checked($selectedMethod === 'cash_delivery')>
+                                <input type="radio" name="payment_method" value="{{ PaymentMethod::CashOnDelivery->value }}" required @checked($selectedMethod === PaymentMethod::CashOnDelivery->value)>
                                 <span class="sofar-checkout-method__body">
                                     <span class="sofar-checkout-method__name">Pay on delivery</span>
                                     <span class="sofar-checkout-method__desc">Pay when your order arrives. The delivery fee is paid before your items are shipped.</span>
@@ -103,7 +105,7 @@
                             @foreach ($cart as $item)
                                 <li>
                                     <span class="sofar-checkout-lines__thumb">
-                                        <img src="{{ asset('images/products/'.rawurlencode((string) ($item->model->image ?? $item->attributes->image))) }}" alt="" loading="lazy">
+                                        <img src="{{ Media::url(Media::PRODUCTS, $item->model->image ?? $item->attributes->image) }}" alt="" loading="lazy">
                                         <span class="sofar-checkout-lines__qty">{{ $item->quantity }}</span>
                                     </span>
                                     <span class="sofar-checkout-lines__name">{{ $item->name }}</span>

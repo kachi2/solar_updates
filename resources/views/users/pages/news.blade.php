@@ -3,7 +3,7 @@
 @section('content')
 @php
     $excerpt = fn ($post, $limit) => \Illuminate\Support\Str::limit(trim(html_entity_decode(strip_tags((string) $post->content))), $limit);
-    $imageUrl = fn ($post) => asset('images/news/'.rawurlencode((string) $post->image));
+    $imageUrl = fn ($post) => $post->image_url;
     $featured = $news->first();
     $others = $news->slice(1);
 @endphp

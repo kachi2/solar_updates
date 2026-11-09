@@ -9,7 +9,7 @@
     <a href="{{ route('news.details', $post) }}" class="sofar-project-card__link">
         <span class="sofar-project-card__media">
             @if ($post->image)
-                <img src="{{ asset('images/news/'.rawurlencode((string) $post->image)) }}" alt="{{ $post->title }}" loading="lazy">
+                <img src="{{ $post->image_url }}" alt="{{ $post->title }}" loading="lazy">
             @endif
         </span>
         <span class="sofar-project-card__body">

@@ -257,6 +257,30 @@ class AccountTest extends TestCase
         $this->actingAs($user)->get(route('users.add-address'))->assertSee('is-invalid', false);
     }
 
+    public function test_order_statuses_show_correctly_to_customers(): void
+    {
+        $user = $this->createCustomer();
+
+        // is_delivered = 1 means "Initiated" in the admin, not "Delivered".
+        $initiated = $this->createUnpaidOrder($user);
+        $initiated->update(['is_delivered' => 1, 'dispatch_status' => 0]);
+
+        $delivered = $this->createUnpaidOrder($user);
+        $delivered->update(['is_paid' => 1, 'is_delivered' => 1, 'dispatch_status' => 2]);
+
+        $cancelled = $this->createUnpaidOrder($user);
+        $cancelled->update(['is_delivered' => 3]);
+
+        $this->actingAs($user)->get(route('users.order-details', encrypt($initiated->order_No)))
+            ->assertOk()->assertSee('Processing')->assertDontSee('>Delivered<', false);
+
+        $this->actingAs($user)->get(route('users.order-details', encrypt($delivered->order_No)))
+            ->assertOk()->assertSee('Paid')->assertSee('Delivered');
+
+        $this->actingAs($user)->get(route('users.order-details', encrypt($cancelled->order_No)))
+            ->assertOk()->assertSee('Cancelled')->assertSee('sofar-status--danger', false);
+    }
+
     public function test_orders_list_empty_state(): void
     {
         $this->actingAs($this->createCustomer())->get(route('users.orders'))

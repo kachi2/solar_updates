@@ -1,9 +1,6 @@
 @php
     $whatsappNumber = config('services.whatsapp.number');
-    $phones = [
-        ['display' => '0813 532 4241', 'tel' => '+2348135324241'],
-        ['display' => '0906 945 4452', 'tel' => '+2349069454452'],
-    ];
+    $phones = config('sofar.contact.phones');
 @endphp
 <footer class="sofar-footer">
     <div class="container">
@@ -47,7 +44,7 @@
                 <ul class="sofar-footer__contact">
                     <li>
                         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                        <address>Block C12, Shops 02 &amp; 09, Arena Shopping Complex, Bolade-Oshodi, Lagos</address>
+                        <address>{{ config('sofar.contact.address') }}</address>
                     </li>
                     <li>
                         <i class="fas fa-phone-alt" aria-hidden="true"></i>
@@ -59,7 +56,7 @@
                     </li>
                     <li>
                         <i class="far fa-envelope" aria-hidden="true"></i>
-                        <a href="mailto:support@sofarsolar.ng">support@sofarsolar.ng</a>
+                        <a href="mailto:{{ config('sofar.contact.email') }}">{{ config('sofar.contact.email') }}</a>
                     </li>
                 </ul>
             </div>

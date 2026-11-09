@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\Visibility;
+use App\Models\Concerns\HasImage;
 use App\Models\Concerns\HasSlug;
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class News extends Model
 {
-    use HasFactory, HasSlug;
+    use HasFactory, HasImage, HasSlug;
 
     protected $table = 'news';
 
@@ -23,11 +26,16 @@ class News extends Model
     }
 
     /**
-     * Articles visible on the site (status 1 = disabled in the admin).
+     * Articles visible on the site (see Visibility).
      */
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 1));
+        return $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', Visibility::Hidden->value));
+    }
+
+    public function visibility(): Visibility
+    {
+        return Visibility::fromLegacy($this->status);
     }
 
     protected $fillable = [
@@ -42,5 +50,10 @@ class News extends Model
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'admin_id');
+    }
+
+    protected function imageFolder(): string
+    {
+        return Media::NEWS;
     }
 }

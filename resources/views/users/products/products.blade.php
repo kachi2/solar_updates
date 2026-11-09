@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@use('App\Support\Media')
 @section('title', $title)
 @section('content')
 @php
@@ -43,7 +44,7 @@
                             <div class="sofar-pd-gallery">
                                 <div class="sofar-pd-gallery__main">
                                    
-                                    <img id="sofarPdMainImage" src="{{ asset('images/products/'.rawurlencode((string) $images->first())) }}" alt="{{ $product->name }}">
+                                    <img id="sofarPdMainImage" src="{{ Media::url(Media::PRODUCTS, $images->first()) }}" alt="{{ $product->name }}">
                                 </div>
                             </div>
                             <!-- Tabs -->

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,5 +44,18 @@ class Shipping extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'shipping_id');
+    }
+
+    /**
+     * The customer's default delivery address (the one checkout uses).
+     */
+    public function scopeDefault(Builder $query): Builder
+    {
+        return $query->where('is_default', 1);
+    }
+
+    public function isDefault(): bool
+    {
+        return (int) $this->is_default === 1;
     }
 }

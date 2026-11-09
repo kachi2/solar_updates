@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@use('App\Support\Media')
 @section('title', 'Your cart · ')
 @section('content')
 @php
@@ -55,7 +56,7 @@
                             @endphp
                             <li class="sofar-cart-item">
                                 <a href="{{ $productUrl }}" class="sofar-cart-item__thumb">
-                                    <img src="{{ asset('images/products/'.rawurlencode((string) ($product->image ?? $item->attributes->image))) }}" alt="{{ $item->name }}" loading="lazy">
+                                    <img src="{{ Media::url(Media::PRODUCTS, $product->image ?? $item->attributes->image) }}" alt="{{ $item->name }}" loading="lazy">
                                 </a>
 
                                 <div class="sofar-cart-item__info">

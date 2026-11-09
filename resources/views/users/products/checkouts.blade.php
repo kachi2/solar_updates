@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@use('App\Support\Media')
 @section('title', 'Payment · ')
 @section('content')
 @php
@@ -85,7 +86,7 @@
                         @foreach ($cart as $item)
                             <li>
                                 <span class="sofar-checkout-lines__thumb">
-                                    <img src="{{ asset('images/products/'.rawurlencode((string) ($item->model->image ?? $item->attributes->image))) }}" alt="" loading="lazy">
+                                    <img src="{{ Media::url(Media::PRODUCTS, $item->model->image ?? $item->attributes->image) }}" alt="" loading="lazy">
                                     <span class="sofar-checkout-lines__qty">{{ $item->quantity }}</span>
                                 </span>
                                 <span class="sofar-checkout-lines__name">{{ $item->name }}</span>
@@ -139,7 +140,7 @@
 
             FlutterwaveCheckout({
                 public_key: @json(config('services.flutterwave.public_key')),
-                tx_ref: 'SFSL' + Math.floor((Math.random() * 1000000) + 1),
+                tx_ref: @json(config('sofar.orders.reference_prefix')) + Math.floor((Math.random() * 1000000) + 1),
                 amount: @json($subtotal),
                 currency: 'NGN',
                 country: 'NG',

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\UserFacingException;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Http\RedirectResponse;
 
 abstract class Controller
 {
@@ -17,5 +19,16 @@ abstract class Controller
         } catch (DecryptException) {
             abort(404);
         }
+    }
+
+    /**
+     * Send the customer back (or to the exception's route) with its message.
+     * Flashed both as a form error and as `error`, which different pages display.
+     */
+    protected function failWith(UserFacingException $e): RedirectResponse
+    {
+        $redirect = $e->redirectRoute ? redirect()->route($e->redirectRoute) : back();
+
+        return $redirect->withErrors($e->getMessage())->with('error', $e->getMessage());
     }
 }

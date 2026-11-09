@@ -31,7 +31,7 @@
                                     <a href="{{ route('user.category', $cat) }}">
                                         <span class="sofar-drawer__thumb">
                                             @if ($cat->image)
-                                                <img src="{{ asset('images/category/'.rawurlencode((string) $cat->image)) }}" alt="" loading="lazy">
+                                                <img src="{{ $cat->image_url }}" alt="" loading="lazy">
                                             @else
                                                 <i class="ec ec-shopping-bag" aria-hidden="true"></i>
                                             @endif
