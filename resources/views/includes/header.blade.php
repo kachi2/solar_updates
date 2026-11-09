@@ -125,28 +125,64 @@
                                     <!-- End Input -->
                                 </li>
                                 <!-- End Search -->
-                                <li class="col d-none d-xl-block">
-                                    {{-- <a href="../shop/compare.html" class="text-gray-90" data-toggle="tooltip" data-placement="top" title="Compare"><i class="font-size-22 ec ec-compare"></i></a> --}}
-                                </li>
-                                <li class="col d-none d-xl-block">
-                                    {{-- <a href="../shop/wishlist.html" class="text-gray-90" data-toggle="tooltip" data-placement="top" title="Favorites">
-                                        <i class="font-size-22 ec ec-favorites"></i></a> --}}
-                                    </li>
                                 <li class="col  px-2 px-sm-3">
-                                    <a href="{{route('users.account')}}" class="text-gray-90" data-toggle="tooltip" data-placement="top" title="My Account">
+                                    @auth
+                                    {{-- Logged in: the icon opens the account menu (Bootstrap dropdown) --}}
+                                    @php
+                                        // First word of the name; some legacy accounts use an email as the name.
+                                        $firstName = strtok(trim((string) auth()->user()->name), ' @') ?: 'Account';
+                                    @endphp
+                                    <div class="dropdown header-account">
+                                        <a href="{{ route('users.account') }}" id="headerAccountDropdown" class="header-icon text-gray-90" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="My Account">
+                                            <i class="font-size-22 ec ec-user"></i>
+                                            <span class="header-account__name d-none d-sm-inline-flex">
+                                                <small>Hello,</small>
+                                                <span>{{ mb_convert_case($firstName, MB_CASE_TITLE) }}</span>
+                                            </span>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right header-account__menu" aria-labelledby="headerAccountDropdown">
+                                            <div class="header-account__head">
+                                                <span class="header-account__avatar">{{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 1)) }}</span>
+                                                <div class="header-account__who">
+                                                    <strong>{{ auth()->user()->name }}</strong>
+                                                    <small>{{ auth()->user()->email }}</small>
+                                                </div>
+                                            </div>
+                                            <a class="dropdown-item" href="{{ route('users.account') }}"><i class="fa fa-user"></i> My Account</a>
+                                            <a class="dropdown-item" href="{{ route('users.orders') }}"><i class="fa fa-box"></i> My Orders</a>
+                                            <a class="dropdown-item" href="{{ route('users.address') }}"><i class="fa fa-map-marker-alt"></i> Address Book</a>
+                                            <a class="dropdown-item" href="{{ route('user.notification') }}">
+                                                <i class="fa fa-bell"></i> Notifications
+                                                @if (auth()->user()->notifyCount > 0)
+                                                    <span class="header-account__count">{{ auth()->user()->notifyCount }}</span>
+                                                @endif
+                                            </a>
+                                            <a class="dropdown-item" href="{{ route('users.recentViews') }}"><i class="fa fa-clock"></i> Recently Viewed</a>
+                                            <a class="dropdown-item" href="{{ route('user.transactions') }}"><i class="fa fa-wallet"></i> Card Payments</a>
+                                            <a class="dropdown-item" href="{{ route('user.account.details') }}"><i class="fa fa-user-cog"></i> Update Account</a>
+                                            <div class="dropdown-divider"></div>
+                                            <form method="POST" action="{{ route('logout') }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item header-account__logout"><i class="fa fa-sign-out-alt"></i> Logout</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    @else
+                                    <a href="{{ route('login') }}" class="header-icon text-gray-90" data-toggle="tooltip" data-placement="top" title="Login / Register">
                                         <i class="font-size-22 ec ec-user"></i></a>
+                                    @endauth
                                 </li>
                                  <li class="col pr-xl-0 px-2 px-sm-3 d-xl-none">
-                                    <a href="{{route('carts.index')}}" class="text-gray-90 position-relative d-flex " data-toggle="tooltip" data-placement="top" title="Cart">
+                                    <a href="{{route('carts.index')}}" class="header-icon header-cart text-gray-90 position-relative d-flex " data-toggle="tooltip" data-placement="top" title="Cart">
                                         <i class="font-size-22 ec ec-shopping-bag" ></i>
-                                        <span class="bg-lg-down-black width-22 height-22  cartReload position-absolute d-flex align-items-center justify-content-center rounded-circle left-12 top-8 font-weight-bold font-size-12" style=" color:#fff"> @if(Cart::getTotalQuantity()> 0){{Cart::getTotalQuantity()}}  @else 0 @endif</span>
+                                        <span class="header-cart__badge cartReload position-absolute d-flex align-items-center justify-content-center rounded-circle font-weight-bold font-size-12"> @if(Cart::getTotalQuantity()> 0){{Cart::getTotalQuantity()}}  @else 0 @endif</span>
                                         <span class="d-none d-xl-block font-weight-bold cartReloads font-size-16 text-gray-90 ml-3"> @if(Cart::getTotalQuantity() > 0)₦{{number_format(Cart::getSubTotal(false))}} @endif</span>
                                     </a>
                                 </li>
                                 <li class="col pr-xl-0 px-2 px-sm-3 d-none d-xl-block">
-                                    <a href="{{route('carts.index')}}" class="text-gray-90 position-relative d-flex " data-toggle="tooltip" data-placement="top" title="Cart">
+                                    <a href="{{route('carts.index')}}" class="header-icon header-cart text-gray-90 position-relative d-flex " data-toggle="tooltip" data-placement="top" title="Cart">
                                         <i class="font-size-22 ec ec-shopping-bag"></i>
-                                        <span class="bg-lg-down-black width-22 height-22 cartReload bg-primary position-absolute d-flex align-items-center justify-content-center rounded-circle left-12 top-8 font-weight-bold font-size-12"> @if(Cart::getTotalQuantity()> 0){{Cart::getTotalQuantity()}}  @else 0 @endif</span>
+                                        <span class="header-cart__badge cartReload position-absolute d-flex align-items-center justify-content-center rounded-circle font-weight-bold font-size-12"> @if(Cart::getTotalQuantity()> 0){{Cart::getTotalQuantity()}}  @else 0 @endif</span>
                                         <span class="d-none d-xl-block font-weight-bold font-size-16 text-gray-90 ml-3 cartReloads"> @if(Cart::getTotalQuantity() > 0)₦{{number_format(Cart::getSubTotal(false))}} @endif</span>
                                    
                                    </a>
@@ -158,7 +194,7 @@
             </div>
         </div>
         <div class="d-none d-xl-block container">
-            <div class="row">
+            <div class="row header-menu-row">
                 <div class="col-md-auto d-none d-xl-block">
                     <div class="max-width-270 min-width-270">
                         <div id="basicsAccordion">
@@ -218,12 +254,22 @@
                     </div>
                 </div>
                 <div class="col">
-                    <nav class="js-mega-menu navbar navbar-expand-md u-header__navbar u-header__navbar--no-space">
+                    <nav class="header-main-nav js-mega-menu navbar navbar-expand-md u-header__navbar u-header__navbar--no-space">
                         <div id="navBar" class="collapse navbar-collapse u-header__navbar-collapse">
                             <ul class="navbar-nav u-header__navbar-nav">
                                @foreach ($menu as $mnu )
-                                <li class="nav-item u-header__nav-item">
-                                    <a class="nav-link u-header__nav-link" href="{{route('pages',$mnu->slug)}}" aria-haspopup="true" aria-expanded="false">{{$mnu->name}}</a>
+                                @php
+                                    // Which URLs belong to each menu item (detail pages highlight their section).
+                                    $isActive = request()->is(...match ($mnu->slug) {
+                                        'home' => ['/', 'home', 'pages/home'],
+                                        'products' => ['pages/products', 'products/*', 'category/*', 'page/search'],
+                                        'projects' => ['pages/projects', 'projects/*'],
+                                        'news' => ['pages/news', 'news/*'],
+                                        default => ['pages/'.$mnu->slug],
+                                    });
+                                @endphp
+                                <li @class(['nav-item', 'u-header__nav-item', 'active' => $isActive])>
+                                    <a class="nav-link u-header__nav-link" href="{{route('pages',$mnu->slug)}}" @if($isActive) aria-current="page" @endif>{{$mnu->name}}</a>
                                 </li>
                                 @endforeach
                             </ul>
