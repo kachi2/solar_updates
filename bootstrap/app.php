@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,7 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Guests hitting /admin/* go to the admin login; customers to the shop login.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin', 'admin/*')
+            ? route('admin-login')
+            : route('login'));
+
+        // Already-logged-in visitors of a login page go to their home page.
+        $middleware->redirectUsersTo(fn (Request $request) => $request->is('admin', 'admin/*')
+            ? route('admin.index')
+            : route('index'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -28,7 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $request->user()->update([
+            'last_login' => now()->toDateTimeString(),
+            'login_ip' => $request->ip(),
+        ]);
+
+        return redirect()->intended(route('index', absolute: false));
     }
 
     /**
