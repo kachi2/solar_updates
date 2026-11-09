@@ -111,8 +111,8 @@ class PagesController extends Controller
                 'products' => Product::latest()->paginate(20),
             ]),
             'news' => view('users.pages.news', [
-                'news' => News::latest()->get(),
-                'recent' => News::latest()->take(5)->get(),
+                // status 1 = disabled in the admin (NewsController::status).
+                'news' => News::published()->latest()->get(),
             ]),
             'contacts' => view('users.pages.contact', [
                 'contact' => ContactUs::latest()->first(),
@@ -122,12 +122,23 @@ class PagesController extends Controller
         };
     }
 
-    public function newsDetails(string $id): View
+    public function newsDetails(News $news): View
     {
+        // Articles disabled in the admin are not public.
+        abort_if((int) $news->status === 1, 404);
+
         return view('users.pages.news-details', [
-            'news' => News::findOrFail($this->decryptId($id)),
-            'recent' => News::latest()->take(5)->get(),
+            'news' => $news,
+            'moreNews' => News::published()->whereKeyNot($news->id)->latest()->take(3)->get(),
         ]);
+    }
+
+    /**
+     * Old /news/details/{encrypted id} links → 301 to /news/{slug}.
+     */
+    public function legacyNewsDetails(string $id): RedirectResponse
+    {
+        return redirect()->route('news.details', News::findOrFail($this->decryptId($id)), 301);
     }
 
     public function projectsDetails(Project $project): View

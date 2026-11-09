@@ -1,70 +1,79 @@
 @extends('layouts.app')
+@section('title', $news->title.' · ')
 @section('content')
-
-<main id="content" role="main">
-    <!-- breadcrumb -->
-    <div class="bg-gray-13 bg-md-transparent">
-        <div class="container">
-            <!-- breadcrumb -->
-            <div class="my-md-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-3 flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble">
-                        <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="">Home</a></li>
-                        <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="">News</a></li>
-                        <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1 active" aria-current="page">{{$news->title}}</li>
-                    </ol>
-                </nav>
-            </div>
-            <!-- End breadcrumb -->
-        </div>
-    </div>
-    <!-- End breadcrumb -->
-
+@php
+    $imageUrl = fn ($file) => asset('images/news/'.rawurlencode((string) $file));
+    // Extra photos (the gallery field often repeats the cover image).
+    $extraPhotos = collect(json_decode((string) $news->images, true) ?: [])
+        ->filter()
+        ->unique()
+        ->reject(fn ($file) => $file === $news->image)
+        ->values();
+    $articleUrl = route('news.details', $news);
+    $shareWhatsApp = 'https://wa.me/?text='.rawurlencode($news->title.' '.$articleUrl);
+    $shareFacebook = 'https://www.facebook.com/sharer/sharer.php?u='.rawurlencode($articleUrl);
+@endphp
+<main id="content" role="main" class="sofar-cart sofar-article">
     <div class="container">
-        <div class="row">
-            <div class="col-xl-9 col-wd">
-                <div class="min-width-500-wd">
-                    <article class="card mb-8 border-0">
-                        <img class="img-fluid" src="{{asset('/images/news/'.$news->image)}}" alt="Image Description">
-                        <div class="card-body pt-5 pb-0 px-0">
-                            <div class="d-block d-md-flex flex-center-between mb-4 mb-md-0">
-                                <h4 class="mb-md-3 mb-1">{{$news->title}}</h4>
-                             
-                            </div>
-                            <div class="mb-3 pb-3 border-bottom">
-                                <div class="list-group list-group-horizontal flex-wrap list-group-borderless align-items-center mx-n0dot5">
-                                   
-                                    <a href="" class="mx-0dot5 text-gray-5">Posted On {{$news->created_at->format('d/m/y')}}</a>
-                                </div>
-                            </div>
-                            <p>{!! $news->content !!}</p>
-                        </div>
-                    </article>
-               
-            </div>
-            </div>
-            <div class="col-xl-3 col-wd">
-                <aside class="mb-7">
-                    <div class="border-bottom border-color-1 mb-5">
-                        <h3 class="section-title section-title__sm mb-0 pb-2 font-size-18">Recent Posts</h3>
-                    </div>
-                    @foreach ($recent as $post )
-                    <article class="mb-4">
-                        <div class="media">
-                            <div class="width-75 height-75 mr-3">
-                                <img class="img-fluid object-fit-cover" src="{{asset('/images/news/'.$post->image)}}" alt="Image Description">
-                            </div>
-                            <div class="media-body">
-                                <h4 class="font-size-14 mb-1"><a href="../blog/single-blog-post.html" class="text-gray-39">{{$post->title}}</a></h4>
-                                <span class="text-gray-5">{{$post->created_at->format('d/m/y')}}</span>
-                            </div>
-                        </div>
-                    </article>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb sofar-cart__breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('pages', 'news') }}">News</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ $news->title }}</li>
+            </ol>
+        </nav>
+
+        <article class="sofar-article__body">
+            <header class="sofar-article__head">
+                <p class="sofar-article__meta">
+                    <span class="sofar-news__label">News</span>
+                    @if ($news->created_at)
+                        <time datetime="{{ $news->created_at->toDateString() }}">{{ $news->created_at->format('j F Y') }}</time>
+                    @endif
+                </p>
+                <h1 class="sofar-article__title">{{ $news->title }}</h1>
+            </header>
+
+            @if ($news->image)
+                <figure class="sofar-article__cover">
+                    <img src="{{ $imageUrl($news->image) }}" alt="{{ $news->title }}">
+                </figure>
+            @endif
+
+            @if (trim(strip_tags((string) $news->content)) !== '')
+                <div class="sofar-prose sofar-article__text">{!! $news->content !!}</div>
+            @endif
+
+            @if ($extraPhotos->isNotEmpty())
+                <div class="sofar-article__photos">
+                    @foreach ($extraPhotos as $photo)
+                        <a href="{{ $imageUrl($photo) }}" data-fancybox="article-gallery" data-caption="{{ $news->title }}" class="sofar-project-gallery__item" aria-label="Open photo {{ $loop->iteration }}">
+                            <img src="{{ $imageUrl($photo) }}" alt="{{ $news->title }}, photo {{ $loop->iteration }}" loading="lazy">
+                        </a>
                     @endforeach
-                    
-            </div>
-        </div>
+                </div>
+            @endif
+
+            <footer class="sofar-article__foot">
+                <div class="sofar-article__share">
+                    <span>Share</span>
+                    <a href="{{ $shareWhatsApp }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp" aria-hidden="true"></i></a>
+                    <a href="{{ $shareFacebook }}" target="_blank" rel="noopener" aria-label="Share on Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+                </div>
+                <a href="{{ route('pages', 'news') }}" class="sofar-cart__continue">← All news</a>
+            </footer>
+        </article>
+
+        @if ($moreNews->isNotEmpty())
+            <section class="sofar-pd-section sofar-project__more">
+                <h2 class="sofar-pd-section__title">More news</h2>
+                <div class="sofar-project-grid">
+                    @foreach ($moreNews as $post)
+                        @include('includes.news-card', ['post' => $post])
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 </main>
-
 @endsection

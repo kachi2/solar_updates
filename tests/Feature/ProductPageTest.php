@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\News;
 use App\Models\Product;
+use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesShopData;
 use Tests\TestCase;
@@ -44,6 +46,81 @@ class ProductPageTest extends TestCase
             ->assertRedirect(route('user.category', $category));
         $this->get('/category/no-such-category')->assertNotFound();
         $this->get('/category/eyJnotEncrypted')->assertNotFound();
+    }
+
+    public function test_project_page_uses_slug_and_old_links_redirect(): void
+    {
+        $project = Project::create([
+            'title' => 'Solar installation @ Ikeja GRA',
+            'content' => '<p><span style="font-size: 13px">25kva installation</span></p>',
+            'image' => 'main.jpg',
+            'images' => json_encode(['main.jpg', 'second.jpg', 'third.jpg']),
+        ]);
+        $other = Project::create(['title' => 'Ibadan duplex', 'image' => 'x.jpg']);
+
+        $this->assertSame('solar-installation-at-ikeja-gra', $project->slug);
+
+        $this->get('/project/solar-installation-at-ikeja-gra')
+            ->assertOk()
+            ->assertSee('Solar installation @ Ikeja GRA')
+            ->assertSee('3 photos')
+            ->assertSee('data-fancybox="project-gallery"', false)
+            ->assertSee('25kva installation')
+            ->assertSee('More projects')
+            ->assertSee(route('projects.details', $other));
+
+        $this->get('/projects/details/'.encrypt($project->id))
+            ->assertStatus(301)
+            ->assertRedirect(route('projects.details', $project));
+
+        $this->get('/project/no-such-project')->assertNotFound();
+    }
+
+    public function test_news_page_features_newest_and_hides_disabled_posts(): void
+    {
+        $adminId = $this->createAdmin()->id;
+        $old = News::create(['admin_id' => $adminId, 'title' => 'Older post', 'content' => '<p>Old news</p>', 'image' => 'a.jpg']);
+        $old->forceFill(['created_at' => now()->subMonth()])->save();
+        News::create(['admin_id' => $adminId, 'title' => 'Newest post', 'content' => '<p><span style="font-size:13px">Office opens in Lagos</span></p>', 'image' => 'b.jpg']);
+        News::create(['admin_id' => $adminId, 'title' => 'Hidden post', 'content' => 'x', 'status' => 1]);
+
+        $html = $this->get(route('pages', 'news'))
+            ->assertOk()
+            ->assertSee('News &amp; updates', false)
+            ->assertSee('Newest post')
+            ->assertSee('Office opens in Lagos')
+            ->assertSee('More news')
+            ->assertSee('Older post')
+            ->assertDontSee('Hidden post')
+            ->getContent();
+
+        $this->assertLessThan(strpos($html, 'Older post'), strpos($html, 'Newest post'));
+    }
+
+    public function test_news_article_uses_slug_and_old_links_redirect(): void
+    {
+        $adminId = $this->createAdmin()->id;
+        $article = News::create(['admin_id' => $adminId, 'title' => 'SofarSolar Open office in Lagos', 'content' => '<p>Arena Oshodi</p>', 'image' => 'cover.jpg', 'images' => json_encode(['cover.jpg', 'cover.jpg'])]);
+        $other = News::create(['admin_id' => $adminId, 'title' => 'New battery range', 'content' => 'x']);
+        $hidden = News::create(['admin_id' => $adminId, 'title' => 'Draft', 'content' => 'x', 'status' => 1]);
+
+        $this->assertSame('sofarsolar-open-office-in-lagos', $article->slug);
+
+        $this->get('/news/sofarsolar-open-office-in-lagos')
+            ->assertOk()
+            ->assertSee('SofarSolar Open office in Lagos')
+            ->assertSee('Arena Oshodi')
+            ->assertDontSee('data-fancybox="article-gallery"', false) // gallery only repeated the cover
+            ->assertSee('More news')
+            ->assertSee(route('news.details', $other))
+            ->assertDontSee('Draft');
+
+        $this->get('/news/details/'.encrypt($article->id))
+            ->assertStatus(301)
+            ->assertRedirect(route('news.details', $article));
+
+        $this->get(route('news.details', $hidden))->assertNotFound();
+        $this->get('/news/no-such-article')->assertNotFound();
     }
 
     public function test_unknown_slug_and_bad_legacy_id_return_404(): void

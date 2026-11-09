@@ -116,7 +116,9 @@ Route::get('/page/search', [HomeController::class, 'search'])->name('search');
 Route::post('/add-review/{product}', [HomeController::class, 'addReview'])->middleware('throttle:5,60')->name('review.store');
 
 Route::get('/pages/{slug}', [PagesController::class, 'show'])->name('pages');
-Route::get('/news/details/{id}', [PagesController::class, 'newsDetails'])->name('news.details');
+// Old encrypted-id links redirect permanently to the slug URL (declared first: more specific path).
+Route::get('/news/details/{id}', [PagesController::class, 'legacyNewsDetails'])->name('news.details.legacy');
+Route::get('/news/{news:slug}', [PagesController::class, 'newsDetails'])->name('news.details');
 Route::get('/project/{project:slug}', [PagesController::class, 'projectsDetails'])->name('projects.details');
 // Old encrypted-id links redirect permanently to the slug URL.
 Route::get('/projects/details/{id}', [PagesController::class, 'legacyProjectDetails'])->name('projects.details.legacy');
