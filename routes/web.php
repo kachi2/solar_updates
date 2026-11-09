@@ -106,7 +106,9 @@ Route::prefix('admin')->group(function () {
 
 Route::get('/', [HomeController::class, 'index'])->name('index');
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-Route::get('/products/details/{id}', [HomeController::class, 'productDetails'])->name('product-details');
+Route::get('/product/{product:slug}', [HomeController::class, 'productDetails'])->name('product-details');
+// Old encrypted-id links (already shared/bookmarked) redirect permanently to the slug URL.
+Route::get('/products/details/{id}', [HomeController::class, 'legacyProductDetails'])->name('product-details.legacy');
 Route::get('/category/{id}', [HomeController::class, 'category'])->name('user.category');
 Route::get('/page/search', [HomeController::class, 'search'])->name('search');
 Route::post('/add-review/{product}', [HomeController::class, 'addReview'])->name('review.store');

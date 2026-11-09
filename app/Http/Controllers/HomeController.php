@@ -33,10 +33,18 @@ class HomeController extends Controller
         ]);
     }
 
-    public function productDetails(string $id): View
+    /**
+     * Old /products/details/{encrypted id} links → 301 to /product/{slug}.
+     */
+    public function legacyProductDetails(string $id): RedirectResponse
     {
         $product = Product::findOrFail($this->decryptId($id));
 
+        return redirect()->route('product-details', $product, 301);
+    }
+
+    public function productDetails(Product $product): View
+    {
         session()->push('products.recently_viewed', $product->getKey());
         // `views` can be NULL in legacy rows, so don't use increment() (NULL + 1 = NULL in SQL).
         $product->update(['views' => (int) $product->views + 1]);

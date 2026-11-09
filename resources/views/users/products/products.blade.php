@@ -60,12 +60,12 @@
                                     <div class="row">
                                         <div class="col-auto">
                                        
-                                            <a href="{{route('product-details',encrypt($prods->id))}}" class="d-block width-75">
+                                            <a href="{{route('product-details', $prods)}}" class="d-block width-75">
                                                 <img class="img-fluid" src="{{asset('images/products/'.$prods->image)}}" alt="Image Description">
                                             </a>
                                         </div>
                                         <div class="col">
-                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details',encrypt($prods->id))}}">{{$prods->name}}</a></h3>
+                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details', $prods)}}">{{$prods->name}}</a></h3>
                                            
                                             <div class="font-weight-bold">
                                                 <del class="font-size-15 text-gray-9 d-block">₦{{number_format($prods->price)}} </del>
@@ -92,7 +92,7 @@
                                 data-arrow-right-classes="fas fa-arrow-right u-slick__arrow-classic-inner u-slick__arrow-classic-inner--right mr-lg-2 mr-xl-4"
                                 data-nav-for="#sliderSyncingThumb">
 								
-                                 @foreach (json_decode($product->gallery) as $key =>$imag)
+                                 @foreach ((json_decode((string) $product->gallery) ?: []) as $key =>$imag)
                              @if($imag !=null)
                                 <div class="js-slide">
                                     <img style="width: 300px; max-height:400px;" class="img-fluid" src="{{asset('images/products/'.$imag)}}" alt="Image Description">
@@ -106,7 +106,7 @@
                                 data-slides-show="5"
                                 data-is-thumbs="true"
                                 data-nav-for="#sliderSyncingNav">
-                             @foreach (json_decode($product->gallery) as $key =>$imag )
+                             @foreach ((json_decode((string) $product->gallery) ?: []) as $key =>$imag )
                              @if($imag !=null)
                                 <div class="js-slide" style="cursor: pointer;">
                                     <img class="img-fluid" src="{{asset('images/products/'.$imag)}}"alt="Image Description">

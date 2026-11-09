@@ -41,12 +41,12 @@
                                 <li class="mb-4">
                                     <div class="row">
                                         <div class="col-auto">
-                                            <a href="{{route('product-details', encrypt($prods->id))}}" class="d-block width-75">
+                                            <a href="{{route('product-details', $prods)}}" class="d-block width-75">
                                                 <img class="img-fluid" src="{{asset('images/products/'.$prods->image)}}" alt="Image Description">
                                             </a>
                                         </div>
                                         <div class="col">
-                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details', encrypt($prods->id))}}">{{$prods->name}}</a></h3>
+                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details', $prods)}}">{{$prods->name}}</a></h3>
                                             <div class="font-weight-bold">
                                                 <del class="font-size-15 text-red d-block">₦{{number_format($prods->price)}}</del>
                                                 <ins class="font-size-15  text-gray-9 text-decoration-none d-block">₦{{number_format($prods->sale_price)}}</ins>

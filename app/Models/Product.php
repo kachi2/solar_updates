@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -38,6 +39,31 @@ class Product extends Model
         return [
             'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Give every product a URL slug. An existing slug is kept when the
+     * product is renamed, so links already shared keep working.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Product $product) {
+            if (blank($product->slug)) {
+                $product->slug = static::uniqueSlug((string) $product->name, $product->id);
+            }
+        });
+    }
+
+    public static function uniqueSlug(string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($name) ?: 'product';
+        $slug = $base;
+
+        for ($i = 2; static::where('slug', $slug)->when($ignoreId, fn ($q) => $q->whereKeyNot($ignoreId))->exists(); $i++) {
+            $slug = $base.'-'.$i;
+        }
+
+        return $slug;
     }
 
     public function subCategory(): BelongsTo

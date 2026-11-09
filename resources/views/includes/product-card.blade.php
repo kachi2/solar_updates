@@ -6,7 +6,7 @@
 --}}
 @php
     $quickAdd = $quickAdd ?? true;
-    $detailsUrl = route('product-details', encrypt($product->id));
+    $detailsUrl = route('product-details', $product);
     $price = (float) $product->sale_price;
     $oldPrice = (float) $product->price;
     $discount = $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
