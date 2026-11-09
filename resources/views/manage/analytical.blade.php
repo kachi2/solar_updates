@@ -367,7 +367,7 @@
                                             <tr>
                                             <td>{{$sp->id}}</td>
                                                 <td>
-                                                    <a href="#">{{substr($sp->user->email,0,15)}}..</a>
+                                                    <a href="#">{{ $sp->user ? \Illuminate\Support\Str::limit($sp->user->email, 15) : 'Deleted customer' }}</a>
                                                 </td> 
                                                 <td>
                                                     <a href="#">{{$sp->order_No}}</a>
@@ -452,7 +452,7 @@
                                             <tr>
                                             <td>{{$sp->id}}</td>
                                                 <td>
-                                                    <a href="#">{{substr($sp->user->email,0,15)}}..</a>
+                                                    <a href="#">{{ $sp->user ? \Illuminate\Support\Str::limit($sp->user->email, 15) : 'Deleted customer' }}</a>
                                                 </td> 
                                                 <td>
                                                     <a href="#">{{$sp->order_No}}</a>

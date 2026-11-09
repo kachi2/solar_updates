@@ -14,7 +14,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                    <select class="form-control @error('name') is-invalid @enderror" >
-                                    <option>{{$category->category->name}}</option>
+                                    <option>{{ $category->category?->name }}</option>
                                    </select>
                                          <small id="emailHelp" class="form-text text-muted">Category name
                                          </small>

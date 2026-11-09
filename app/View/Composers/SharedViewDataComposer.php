@@ -37,7 +37,8 @@ class SharedViewDataComposer
     private function data(): array
     {
         return $this->data ??= [
-            'menu' => Menu::all(),
+            // A menu item without a slug can't be linked, so it is skipped rather than breaking every page.
+            'menu' => Menu::whereNotNull('slug')->where('slug', '!=', '')->get(),
             'menu_categories' => Category::withCount('products')->get(),
             'product_menu' => Product::where('status', '!=', 1)->get(),
             'unread_notify' => AdminNotify::where('is_read', 0)->latest()->take(10)->get(),

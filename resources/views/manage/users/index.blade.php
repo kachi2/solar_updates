@@ -111,7 +111,7 @@
                                             <tr>
                                             <td>{{$sp->id}}</td>
                                                 <td>
-                                                    <a href="#">{{substr($sp->user->email,0,15)}}..</a>
+                                                    <a href="#">{{ $sp->user ? \Illuminate\Support\Str::limit($sp->user->email, 15) : 'Deleted customer' }}</a>
                                                 </td> 
                                                 <td>
                                                     <a href="#">{{$sp->order_No}}</a>
@@ -120,7 +120,7 @@
                                                     <a href="#">{{$sp->payment_ref}}</a>
                                                 </td>
                                                 <td>
-                                                    <a href="#">{{$sp->payment_method = 'card'? 'Card Payment' : 'Cash on Delivery'}}</a>
+                                                    <a href="#">{{$sp->payment_method === 'card' ? 'Card Payment' : 'Cash on Delivery'}}</a>
                                                 </td>
                                                  <td>
                                                     <a href="#">{{number_format($sp->amount,2)}}</a>

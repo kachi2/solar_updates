@@ -1,41 +1,35 @@
 @extends('layouts.app')
-
+@section('title', 'Page not found · ')
 @section('content')
+<main id="content" role="main" class="sofar-error">
+    <div class="container">
+        <section class="sofar-error__box">
+            <p class="sofar-error__code" aria-hidden="true">404</p>
+            <h1 class="sofar-error__title">We can't find that page</h1>
+            <p class="sofar-error__text">The link may be old, or the page may have moved. Try a search, or pick up from one of the links below.</p>
 
-<main id="content" role="main" class="checkout-page">
-	<!-- breadcrumb -->
-	<div class="bg-gray-13 bg-md-transparent">
-		<div class="container">
-			<!-- breadcrumb -->
-			<div class="my-md-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb mb-3 flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble">
-						<li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="">Home</a></li>
-						<li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1 active" aria-current="page">Errors</li>
-					</ol>
-				</nav>
-			</div>
-			<!-- End breadcrumb -->
-		</div>
-	</div>
-		
+            <form action="{{ route('search') }}" method="GET" class="sofar-error__search" role="search">
+                <label for="errorSearch" class="sr-only">Search products</label>
+                <input type="search" id="errorSearch" name="search" placeholder="Search inverters, batteries, panels…" required>
+                <button type="submit" class="sofar-cart-btn">Search</button>
+            </form>
 
+            <div class="sofar-error__actions">
+                <a href="{{ route('index') }}" class="sofar-cart-btn">Go to homepage</a>
+                <a href="{{ route('pages', 'products') }}" class="sofar-checkout-step__secondary sofar-account__browse">Browse products</a>
+            </div>
 
-		
-            <div class="container">
-                    <div class="row">
-						<div style="" class="mb-7 mb-lg-0 p-3">
-                            <div >
-                                <div class="bg-gray-1 rounded-lg p-2">
-                                        <div class=" mb-5">
-                                            <p class=" mb-0 p-3 "><i class="fa fa-check"></i> This page cannot be found on this server</p>
-											<a href="{{route('index')}}" class="btn btn-primary btn-sm p-2"> Return Home</a>
-									
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-			</div>
-		</main>
-
+            @if (isset($menu_categories) && $menu_categories->isNotEmpty())
+                <div class="sofar-error__links">
+                    <span>Popular categories</span>
+                    <ul>
+                        @foreach ($menu_categories as $errorCategory)
+                            <li><a href="{{ route('user.category', $errorCategory) }}">{{ $errorCategory->name }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </section>
+    </div>
+</main>
 @endsection

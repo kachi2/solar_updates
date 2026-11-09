@@ -41,7 +41,7 @@
         <form method="post" action="{{route('updateDollarRate')}}">
       @csrf
         <div  style="display: flex" class="p-2" >
-        <input type="number" name="rate" class="form-control" value="{{$dollar_exchange_rate->rate}}"> <input type="submit" value="Update Exchange Rate" class="btn btn-primary" id="dollar_rate" >  </div>
+        <input type="number" name="rate" class="form-control" value="{{ $dollar_exchange_rate?->rate }}"> <input type="submit" value="Update Exchange Rate" class="btn btn-primary" id="dollar_rate" >  </div>
     </form>
     </div>
    
