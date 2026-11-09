@@ -339,78 +339,25 @@
                     <div class="d-flex justify-content-between align-items-center border-bottom border-color-1 flex-lg-nowrap flex-wrap mb-4">
                         <h3 class="section-title mb-0 pb-2 font-size-22">Recently Viewed</h3>
                     </div>
-                    <ul class="row list-unstyled products-group no-gutters">
-                         @foreach($recent as $recents)
-                         
-                        <li class="col-6 col-md-3 col-xl-2gdot4-only col-wd-2 product-item">
-                            <div class="product-item__outer h-100">
-                                <div class="product-item__inner px-xl-4 p-3">
-                                    <div class="product-item__body pb-xl-2">
-                                        <div class="mb-2"><a href="{{route('user.category',encrypt($recents->category->id))}}" class="font-size-12 text-gray-5">{{$recents->category->name}}</a></div>
-                                        <hr>
-                                        <h5 class="mb-1 product-item__title"><a href="{{route('product-details',encrypt($recents->id))}}" class="text-blue font-weight-bold">{{$recents->name}}</a></h5>
-                                        <div class="mb-2">
-                                            <a href="{{route('product-details',encrypt($recents->id))}}" class="d-block text-center"><img class="img-fluid" src="{{asset('images/products/'.$recents->image)}}" alt="Image Description"></a>
-                                        </div>
-                                        <div class="flex-center-between mb-1">
-                                            <div class="prodcut-price">
-                                                  <div class="text-gray-100">₦{{number_format($recents->sale_price)}} <span style="color:rgb(15, 15, 79); font-size:14px"> {{number_format($recents->exchange_rate)}}  USD </span></div>
-                                                         <del style="font-size:13px">₦{{number_format($recents->price)}}</del>
-                                            </div>
-                                            <div class="d-none d-xl-block prodcut-add-cart">
-                                                <a href="{{route('product-details',encrypt($recents->id))}}" class="btn-add-cart btn-primary transition-3d-hover"><i class="ec ec-add-to-cart"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="product-item__footer">
-                                        <div class="border-top pt-2 flex-center-between flex-wrap">
-                                           
-                                            <a href="{{route('product-details',encrypt($recents->id))}}" class="text-gray-6 font-size-13"><i class="ec ec-favorites mr-1 font-size-15"></i>Add to Cart</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                         @endforeach
-                    </ul>
+                    <div class="row sofar-product-grid">
+                        @foreach($recent as $recents)
+                        <div class="col-6 col-md-4 col-xl-3">
+                            @include('includes.product-card', ['product' => $recents])
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
                 <div class="mb-6">
                     <div class="d-flex justify-content-between align-items-center border-bottom border-color-1 flex-lg-nowrap flex-wrap mb-4">
                         <h3 class="section-title mb-0 pb-2 font-size-22">You May also Like</h3>
                     </div>
-                    <ul class="row list-unstyled products-group no-gutters">
-                         @foreach($related as $related_pro)
-                        <li class="col-6 col-md-3 col-xl-2gdot4-only col-wd-2 product-item">
-                            <div class="product-item__outer h-100">
-                                <div class="product-item__inner px-xl-4 p-3">
-                                    <div class="product-item__body pb-xl-2">
-                                        <div class="mb-2"><a href="{{route('user.category',encrypt($related_pro->category->id))}}" class="font-size-12 text-gray-5">{{$related_pro->category->name}}</a></div>
-                                        <hr>
-                                        <h5 class="mb-1 product-item__title"><a href="{{route('product-details',encrypt($recents->id))}}" class="text-blue font-weight-bold">{{$related_pro->name}}</a></h5>
-                                        <span style="background-color:#fed700 !important; padding:4px; border:2px solid #fed700; border-radius:100px; z-index:2222; font-size:11px; position:absolute; right:30px; width:34px; font-weight:bold;  height:30px"> -{{number_format($related_pro->percentage)}}%</span>
-                                        <div class="mb-2">
-                                            <a href="{{route('product-details',encrypt($related_pro->id))}}" class="d-block text-center"><img class="img-fluid" src="{{asset('images/products/'.$related_pro->image)}}" alt="Image Description"></a>
-                                        </div>
-                                        <div class="flex-center-between mb-1">
-                                            <div class="prodcut-price">
-                                                    <div class="text-gray-100">₦{{number_format($related_pro->sale_price)}}  <span style="color:rgb(15, 15, 79); font-size:14px"> {{number_format($related_pro->exchange_rate)}}  USD </span></div>
-                                                    <del style="font-size:13px">₦{{number_format($related_pro->price)}}</del>
-                                            </div>
-                                            <div class="d-none d-xl-block prodcut-add-cart">
-                                                <a href="{{route('product-details',encrypt($related_pro->id))}}" class="btn-add-cart btn-primary transition-3d-hover"><i class="ec ec-add-to-cart"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="product-item__footer">
-                                        <div class="border-top pt-2 flex-center-between flex-wrap">
-                                            <a href="{{route('product-details',encrypt($related_pro->id))}}" class="text-gray-6 font-size-13"><i class="ec ec-favorites mr-1 font-size-15"></i>Add to Cart</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                         @endforeach
-                    </ul>
+                    <div class="row sofar-product-grid">
+                        @foreach($related as $related_pro)
+                        <div class="col-6 col-md-4 col-xl-3">
+                            @include('includes.product-card', ['product' => $related_pro])
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </main>

@@ -142,7 +142,7 @@
     }
 </style>
 
-<div class="cart-added-overlay" id="cartAddedOverlay" hidden aria-hidden="true">
+<div class="cart-added-overlay" id="cartAddedOverlay" hidden aria-hidden="true" data-image-base="{{ asset('images/products') }}">
     <section class="cart-added-dialog" role="dialog" aria-modal="true" aria-labelledby="cartAddedTitle">
         <div class="cart-added-heading">
             <span id="cartAddedTitle">Your Basket</span>

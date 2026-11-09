@@ -46,4 +46,9 @@ return [
         'key' => env('GOOGLE_MAPS_KEY'),
     ],
 
+    // WhatsApp number for "order on WhatsApp" buttons (international format, digits only).
+    'whatsapp' => [
+        'number' => env('WHATSAPP_NUMBER', '2348135324241'),
+    ],
+
 ];

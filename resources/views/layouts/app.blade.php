@@ -159,6 +159,7 @@
           $.HSCore.components.HSSelectPicker.init('.js-select');
       });
   </script>
+  <script src="{{asset('/frontend/js/sofar-cart.js')}}"></script>
 
   @yield('scripts')
 </body>

@@ -125,57 +125,17 @@
                         <!-- Tab Content -->
                         <div class="tab-content" id="pills-tabContent">
                             <div class="tab-pane fade pt-2 show active" id="pills-one-example1" role="tabpanel" aria-labelledby="pills-one-example1-tab" data-target-group="groups">
-                                <ul class="row list-unstyled products-group no-gutters">
-                                    @forelse ($products as $product )
-                                    <li class="col-6 col-md-3 product-item">
-                                        <div class="product-item__outer h-100 w-100">
-                                            <div class="product-item__inner px-xl-4 p-3">
-                                                <div class="product-item__body pb-xl-2">
-                                                   
-                                                    <div class="mb-2"><a href="{{route('product-details', encrypt($product->id))}}" class="font-size-12 text-gray-5"> {{$product->category->name}}</a></div>
-                                                    <hr>
-                                                    <h5 class="mb-1 product-item__title"><a href="{{route('product-details', encrypt($product->id))}}" class="text-blue font-weight-bold">{{$product->name}}</a></h5>
-
-            
-                                                    <div class="mb-2">
-                                                        <a href="{{route('product-details', encrypt($product->id))}}" class="d-block text-center"><img class="img-fluid" src="{{asset('/images/products/'.$product->image)}}" alt="Image Description"></a>
-                                                    </div>
-                                                    <div class="flex-center-between mb-1">
-                                                        <div class="prodcut-price">
-                                                            <div class="text-gray-100">₦{{number_format($product->sale_price)}}</div>
-                                                         <del style="font-size:13px">₦{{number_format($product->price)}}</del>
-                                                        </div>
-                                                        <div class="d-none d-xl-block prodcut-add-cart">
-                                                            <a href="{{route('product-details', encrypt($product->id))}}" class="btn-add-cart btn-primary transition-3d-hover"><i class="ec ec-add-to-cart"></i></a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="product-item__footer">
-                                                    <div class="border-top pt-2 flex-center-between flex-wrap">
-                                                         <a href="{{route('product-details', encrypt($product->id))}}" class="text-gray-6 font-size-13"><i class="ec ec-favorites mr-1 font-size-15"></i>Add to Cart</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
+                                <div class="row sofar-product-grid">
+                                    @forelse ($products as $product)
+                                    <div class="col-6 col-lg-4">
+                                        @include('includes.product-card', ['product' => $product])
+                                    </div>
                                     @empty
-                                    <li >
-                                        <div class="product-item__outer h-100 w-100">
-                                            <div class="product-item__inner p-3">
-                                                <div class="">
-                                                   
-                                                    <div class="mb-2"><a href="" class="font-size-12 text-gray-5"> No product found</a></div>
-                                                    <hr>
-                                                    <h5 class="mb-1 product-item__title"><a href="" class="text-blue font-weight-bold"></a></h5>
-
-                                                </div>
-                                                
-                                            </div>
-                                        </div>
-                                    </li>
-                                        
+                                    <div class="col-12">
+                                        <p class="sofar-product-empty">No product found</p>
+                                    </div>
                                     @endforelse
-                                </ul>
+                                </div>
                             </div>
                          
                         </div>

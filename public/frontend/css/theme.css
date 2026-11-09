@@ -37918,3 +37918,386 @@ blockquote:not(.blockquote) p {
 #header .header-account__menu .header-account__logout:hover i {
   color: #b52a2a;
 }
+
+/*------------------------------------
+  Sofar: home page category cards
+  White card, product on a soft tile, Poppins title, yellow arrow.
+  Hover: lift, image zoom, yellow top accent, arrow turns navy.
+------------------------------------*/
+
+.sofar-cat-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 150px;
+  padding: 1rem;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px -14px rgba(16, 49, 120, 0.35);
+  color: #1b2437;
+  font-family: "Poppins", "Open Sans", sans-serif;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Yellow accent that slides in along the top on hover */
+.sofar-cat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #fed700 0%, #ffb800 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s ease;
+}
+
+.sofar-cat-card:hover,
+.sofar-cat-card:focus {
+  color: #1b2437;
+  text-decoration: none;
+  border-color: #d5ddef;
+  box-shadow: 0 22px 40px -22px rgba(16, 49, 120, 0.55);
+  transform: translateY(-4px);
+}
+
+.sofar-cat-card:hover::before,
+.sofar-cat-card:focus::before {
+  transform: scaleX(1);
+}
+
+.sofar-cat-card__media {
+  flex: 0 0 112px;
+  width: 112px;
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  padding: 0.625rem;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 25%, #ffffff 0%, #eef2fb 70%);
+}
+
+.sofar-cat-card__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(16, 49, 120, 0.15));
+  transition: transform 0.35s ease;
+}
+
+.sofar-cat-card:hover .sofar-cat-card__img {
+  transform: scale(1.07);
+}
+
+.sofar-cat-card__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sofar-cat-card__eyebrow {
+  margin-bottom: 0.25rem;
+  color: #8a94a8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sofar-cat-card__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  color: #1b2437;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sofar-cat-card__cta {
+  display: inline-flex;
+  align-items: center;
+  color: #103178;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sofar-cat-card__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 0.5rem;
+  border-radius: 50%;
+  background-color: #fed700;
+  color: #103178;
+  font-size: 0.625rem;
+  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+}
+
+.sofar-cat-card:hover .sofar-cat-card__arrow {
+  background-color: #103178;
+  color: #fff;
+  transform: translateX(4px);
+}
+
+@media (max-width: 575.98px) {
+  .sofar-cat-card__media {
+    flex-basis: 96px;
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sofar-cat-card,
+  .sofar-cat-card::before,
+  .sofar-cat-card__img,
+  .sofar-cat-card__arrow {
+    transition: none;
+  }
+}
+
+/*------------------------------------
+  Sofar: product cards (all product grids)
+  Partial: resources/views/includes/product-card.blade.php
+------------------------------------*/
+
+.sofar-product-grid > [class*="col"] {
+  display: flex;
+  margin-bottom: 1.5rem;
+}
+
+.sofar-product-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 16px;
+  font-family: "Poppins", "Open Sans", sans-serif;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.sofar-product-card:hover {
+  border-color: #d5ddef;
+  box-shadow: 0 24px 44px -26px rgba(16, 49, 120, 0.5);
+  transform: translateY(-4px);
+}
+
+/* Image */
+.sofar-product-card__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  margin: 0.75rem 0.75rem 0;
+  padding: 1rem;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 25%, #ffffff 0%, #f1f4fa 75%);
+}
+
+.sofar-product-card__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.4s ease;
+}
+
+.sofar-product-card:hover .sofar-product-card__img {
+  transform: scale(1.05);
+}
+
+.sofar-product-card__badge {
+  position: absolute;
+  top: 0.625rem;
+  left: 0.625rem;
+  z-index: 1;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background-color: #fed700;
+  color: #103178;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Text */
+.sofar-product-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 0.875rem 1rem 1rem;
+}
+
+.sofar-product-card__category {
+  margin-bottom: 0.25rem;
+  color: #8a94a8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sofar-product-card__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+  margin: 0 0 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sofar-product-card__title a {
+  color: #1b2437;
+  text-decoration: none;
+}
+
+.sofar-product-card__title a:hover {
+  color: #103178;
+}
+
+.sofar-product-card__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.5rem;
+}
+
+.sofar-product-card__now {
+  color: #103178;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.sofar-product-card__was {
+  color: #9aa3b5;
+  font-size: 0.8125rem;
+}
+
+.sofar-product-card__usd {
+  margin-top: 0.125rem;
+  color: #6b7489;
+  font-size: 0.75rem;
+}
+
+/* Buttons */
+.sofar-product-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.875rem;
+}
+
+.sofar-product-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 42px;
+  padding: 0.5rem 0.5rem;
+  border: 1.5px solid #cfd3da;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #2b3445;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.sofar-product-card__btn i {
+  font-size: 1rem;
+}
+
+.sofar-product-card__btn--cart:hover,
+.sofar-product-card__btn--cart:focus {
+  border-color: #103178;
+  background-color: #103178;
+  color: #fff;
+  text-decoration: none;
+}
+
+.sofar-product-card__btn--cart.is-loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.sofar-product-card__btn--cart.is-added {
+  border-color: #2e7d32;
+  background-color: #2e7d32;
+  color: #fff;
+}
+
+.sofar-product-card__btn--whatsapp {
+  border-color: #cfe8d3;
+  background-color: #edf7ef;
+  color: #2e7d32;
+}
+
+.sofar-product-card__btn--whatsapp:hover,
+.sofar-product-card__btn--whatsapp:focus {
+  border-color: #25d366;
+  background-color: #25d366;
+  color: #fff;
+  text-decoration: none;
+}
+
+.sofar-product-empty {
+  padding: 2rem;
+  border: 1px dashed #d5ddef;
+  border-radius: 16px;
+  color: #6b7489;
+  font-family: "Poppins", "Open Sans", sans-serif;
+  text-align: center;
+}
+
+/* Narrow cards (two per row on phones): stack the buttons */
+@media (max-width: 575.98px) {
+  .sofar-product-grid > [class*="col"] {
+    padding-left: 0.375rem;
+    padding-right: 0.375rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .sofar-product-card__body {
+    padding: 0.75rem;
+  }
+
+  .sofar-product-card__now {
+    font-size: 1rem;
+  }
+
+  .sofar-product-card__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sofar-product-card,
+  .sofar-product-card__img,
+  .sofar-product-card__btn {
+    transition: none;
+  }
+}
