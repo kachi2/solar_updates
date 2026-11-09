@@ -109,6 +109,7 @@ class CheckoutController extends Controller
             return view('users.products.checkouts', [
                 'address' => $shipping,
                 'cart' => Cart::getContent(),
+                'order' => $order,
                 'flutterwavePublicKey' => config('services.flutterwave.public_key'),
             ]);
         }

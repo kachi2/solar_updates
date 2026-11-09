@@ -109,13 +109,17 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/product/{product:slug}', [HomeController::class, 'productDetails'])->name('product-details');
 // Old encrypted-id links (already shared/bookmarked) redirect permanently to the slug URL.
 Route::get('/products/details/{id}', [HomeController::class, 'legacyProductDetails'])->name('product-details.legacy');
-Route::get('/category/{id}', [HomeController::class, 'category'])->name('user.category');
+// /category/{slug}; old encrypted-id links on the same path redirect to the slug (see HomeController::category).
+Route::get('/category/{category}', [HomeController::class, 'category'])->name('user.category');
 Route::get('/page/search', [HomeController::class, 'search'])->name('search');
-Route::post('/add-review/{product}', [HomeController::class, 'addReview'])->name('review.store');
+// At most 5 reviews per visitor per hour (anti-spam).
+Route::post('/add-review/{product}', [HomeController::class, 'addReview'])->middleware('throttle:5,60')->name('review.store');
 
 Route::get('/pages/{slug}', [PagesController::class, 'show'])->name('pages');
 Route::get('/news/details/{id}', [PagesController::class, 'newsDetails'])->name('news.details');
-Route::get('/projects/details/{id}', [PagesController::class, 'projectsDetails'])->name('projects.details');
+Route::get('/project/{project:slug}', [PagesController::class, 'projectsDetails'])->name('projects.details');
+// Old encrypted-id links redirect permanently to the slug URL.
+Route::get('/projects/details/{id}', [PagesController::class, 'legacyProjectDetails'])->name('projects.details.legacy');
 
 Route::get('/cart/{id}', [CartController::class, 'add'])->name('carts.add');
 Route::get('/delete/{id}', [CartController::class, 'remove'])->name('carts.delete');
@@ -151,6 +155,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/update-address/{id}', [HomeController::class, 'editAddress'])->name('users.update-address');
     Route::post('/address/store/{id}', [HomeController::class, 'saveAddress'])->name('address.store');
     Route::get('/address/delete/{id}', [HomeController::class, 'deleteAddress'])->name('address.delete');
+    Route::post('/address/default/{id}', [HomeController::class, 'setDefaultAddress'])->name('address.default');
 });
 
 // Customer login, registration, password reset and email verification (Breeze).

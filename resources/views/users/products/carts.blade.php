@@ -1,133 +1,141 @@
 @extends('layouts.app')
+@section('title', 'Your cart · ')
 @section('content')
+@php
+    $itemCount = (int) Cart::getTotalQuantity();
+    // Cart::getTotal() always returns a formatted string ("39,900,000.00"); no cart
+    // conditions are used, so the raw subtotal is the total.
+    $total = (float) Cart::getSubTotal(false);
+    $usdRate = (float) ($dollar_exchange_rate->rate ?? 0);
 
+    // One WhatsApp message with every line in the cart.
+    $whatsappLines = $cart->map(fn ($item) => '• '.$item->quantity.' × '.$item->name.' (₦'.number_format($item->price * $item->quantity).')');
+    $whatsappText = "Hello Sofar Solar, I'd like to order:\n".$whatsappLines->implode("\n")."\nTotal: ₦".number_format($total);
+    $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='.rawurlencode($whatsappText);
+@endphp
+<main id="content" role="main" class="sofar-cart">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb sofar-cart__breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('index') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Cart</li>
+            </ol>
+        </nav>
 
-  <main id="content" role="main" class="cart-page">
-            <!-- breadcrumb -->
-            <div class="bg-gray-13 bg-md-transparent">
-                <div class="container">
-                    <!-- breadcrumb -->
-                    <div class="my-md-3">
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-3 flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble">
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="../home/index.html">Home</a></li>
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1 active" aria-current="page">Cart</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <!-- End breadcrumb -->
-                </div>
+        @if ($cart->isEmpty())
+            <section class="sofar-cart-empty">
+                <i class="ec ec-shopping-bag sofar-cart-empty__icon" aria-hidden="true"></i>
+                <h1 class="sofar-cart-empty__title">Your cart is empty</h1>
+                <p class="sofar-cart-empty__text">Inverters, batteries and panels you add will show up here.</p>
+                <a href="{{ route('pages', 'products') }}" class="sofar-cart-btn">Browse products</a>
+                @guest
+                    <p class="sofar-cart-empty__auth">
+                        Have an account? <a href="{{ route('login') }}">Log in</a> or <a href="{{ route('register') }}">create one</a>.
+                    </p>
+                @endguest
+            </section>
+        @else
+            <div class="sofar-cart__head">
+                <h1 class="sofar-cart__title">Your cart <span>{{ $itemCount }} {{ \Illuminate\Support\Str::plural('item', $itemCount) }}</span></h1>
+                <a href="{{ route('pages', 'products') }}" class="sofar-cart__continue">← Continue shopping</a>
             </div>
-            <!-- End breadcrumb -->
 
-            <div class="container">
-                <div class="mb-4">
-                    <h1 class="text-center">Cart</h1>
-                </div>
-              
-                <?php if(count($cart) > 0 ){?>
-                <div class="mb-10 cart-table">
-                    <form class="mb-4" action="#" method="post">
-                        @csrf
-                        <table class="table" cellspacing="0">
-                            <thead>
-                                <tr>
-                                   <th class="product-thumbnail">Item</th>
-                                    <th class="product-name">Product</th>
-                                    <th class="product-price">Price</th>
-                                    <th class="product-quantity w-lg-15">Quantity</th>
-                                    <th class="product-subtotal">Total</th>
-                                     <th class="product-remove">&nbsp;</th>
-                                    
-                                </tr>
-                            </thead>
-                            <tbody>
-                
-                             @foreach ($cart as $carts )
-                                <tr class="">
-                               
-                                    <td class="d-none d-md-table-cell">
-                                        <a href="#"><img width="50px" height="80"class="img-fluid max-width-100 p-1 border border-color-1" src="{{asset('images/products/' .$carts->model->image)}}" alt="Image Description"></a>
-                                    </td>
+            @if (session('message'))
+                <p class="sofar-cart__notice" role="status">{{ session('message') }}</p>
+            @endif
 
-                                    <td data-title="Product">
-                                        <a href="#" class="text-gray-90">{{$carts->model->name}}</a><br>
-                                        
-                                    </td>
+            <div class="row">
+                <!-- Items -->
+                <div class="col-lg-8">
+                    <ul class="sofar-cart-items">
+                        @foreach ($cart as $item)
+                            @php
+                                $product = $item->model;
+                                $productUrl = $product ? route('product-details', $product) : '#';
+                            @endphp
+                            <li class="sofar-cart-item">
+                                <a href="{{ $productUrl }}" class="sofar-cart-item__thumb">
+                                    <img src="{{ asset('images/products/'.rawurlencode((string) ($product->image ?? $item->attributes->image))) }}" alt="{{ $item->name }}" loading="lazy">
+                                </a>
 
-                                    <td data-title="Price">
-                                        <span class="">₦{{number_format($carts->price)}}</span> / <span style="color:rgb(15, 15, 79); font-size:14px"> {{number_format($carts->model->exchange_rate)}} USD </span><br>
-                                     
-                                        <del style="color:red">{{number_format($carts->model->price)}}</del>
-                                    </td>
-                                
-                                    <td data-title="Quantity">
-                                        <span class="sr-only">Quantity</span>
-                                        <div class="border py-1 width-12 w-xl-30 px-3 border-color-1">
-                                            <div class="js-quantity row align-items-center"> 
-                                                 <div class="col">
-                                                    <input type="text" name="rowId" class="js-result form-control h-auto border-0 rounded p-0 shadow-none counter" type="text" value="{{$carts->quantity}} " readonly>
-                                                 <input type="hidden" name="rowId" class="js-result form-control h-auto border-0 rounded p-0 shadow-none counter" type="text" value="{{$carts->id}}">
-                                                </div>
-                                            </div>
+                                <div class="sofar-cart-item__info">
+                                    <a href="{{ $productUrl }}" class="sofar-cart-item__name">{{ $item->name }}</a>
+                                    @if ($product?->category)
+                                        <span class="sofar-cart-item__meta">{{ $product->category->name }}</span>
+                                    @endif
+                                    <span class="sofar-cart-item__unit">
+                                        ₦{{ number_format($item->price) }} each
+                                        @if ($product && (float) $product->price > (float) $item->price)
+                                            <del>₦{{ number_format($product->price) }}</del>
+                                        @endif
+                                    </span>
+
+                                    <div class="sofar-cart-item__controls">
+                                        <div class="sofar-cart-qty" aria-label="Quantity">
+                                            <form method="POST" action="{{ route('carts.update', encrypt($item->id)) }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="rowId" value="{{ $item->id }}">
+                                                <input type="hidden" name="qty" value="{{ max(1, $item->quantity - 1) }}">
+                                                <button type="submit" class="sofar-cart-qty__btn" aria-label="Decrease quantity" @disabled($item->quantity <= 1)>−</button>
+                                            </form>
+                                            <span class="sofar-cart-qty__value">{{ $item->quantity }}</span>
+                                            <form method="POST" action="{{ route('carts.update', encrypt($item->id)) }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="rowId" value="{{ $item->id }}">
+                                                <input type="hidden" name="qty" value="{{ $item->quantity + 1 }}">
+                                                <button type="submit" class="sofar-cart-qty__btn" aria-label="Increase quantity">+</button>
+                                            </form>
                                         </div>
-                                    </td>
-                                    <td data-title="Total">
-                                        <span class="">{{number_format($carts->price*$carts->quantity )}}</span>
-                                    </td>
-                                   
-                                      <td class="text-center">
-                                       <a href="{{route('carts.delete',encrypt($carts->id))}}" name="rowId"  type="submit"  style="font-weight:bold" class="text-gray-36 font-size-12 btn btn-primary">REMOVE </button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                              
-								
-                            </tbody>
-                        </table>
-                    </form>
+
+                                        <form method="POST" action="{{ route('carts.destroy', $item->id) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="sofar-cart-item__remove">Remove</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div class="sofar-cart-item__total">₦{{ number_format($item->price * $item->quantity) }}</div>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
-				
-                <div class="mb-8 cart-total">
-                    <div class="row">
-                        <div class="col-xl-5 col-lg-6 offset-lg-6 offset-xl-7 col-md-8 offset-md-4">
-                            <div class="border-bottom border-color-1 mb-3">
-                                <h3 class="d-inline-block section-title mb-0 pb-2 font-size-26">Cart Total</h3>
+
+                <!-- Summary -->
+                <div class="col-lg-4">
+                    <aside class="sofar-cart-summary">
+                        <h2 class="sofar-cart-summary__title">Order summary</h2>
+                        <dl class="sofar-cart-summary__rows">
+                            <div>
+                                <dt>Subtotal</dt>
+                                <dd>₦{{ number_format($total) }}</dd>
                             </div>
-                            <table class="table mb-3 mb-md-0">
-                                <tbody>
-                                    <tr class="cart-subtotal">
-                                        <th>Subtotal</th>
-                                        <td data-title="Subtotal"><span class="amount">{{Cart::getSubTotal()}}</span></td>
-                                    </tr>
-                                   
-                                    <tr class="order-total">
-                                        <th>Total</th>
-                                        <td data-title="Total"><strong><span class="amount">{{Cart::getTotal()}}</span></strong></td>
-                                    </tr>
-                                    <tr class="order-total">
-										<th></th>
-                                        <td></td>
-                                        
-                                    </tr>
-                                </tbody>
-                            </table>
-                             <a href="{{route('checkout.index')}}"><button type="button" class="btn btn-primary ml-md-2 px-5 px-md-4 px-lg-5 w-100 w-md-auto ">Proceed to checkout</button></a>
+                            <div>
+                                <dt>Delivery</dt>
+                                <dd class="sofar-cart-summary__muted">Calculated at checkout</dd>
+                            </div>
+                        </dl>
+                        <div class="sofar-cart-summary__total">
+                            <span>Total</span>
+                            <strong>₦{{ number_format($total) }}</strong>
                         </div>
-                    </div>
+                        @if ($usdRate > 0)
+                            <p class="sofar-cart-summary__usd">≈ {{ number_format($total / $usdRate) }} USD</p>
+                        @endif
+
+                        <a href="{{ route('checkout.index') }}" class="sofar-cart-btn sofar-cart-btn--block">Checkout</a>
+                        <a href="{{ $whatsappUrl }}" class="sofar-cart-summary__whatsapp" target="_blank" rel="noopener">
+                            <i class="fab fa-whatsapp" aria-hidden="true"></i> Order on WhatsApp instead
+                        </a>
+                        @guest
+                            <p class="sofar-cart-summary__note">You'll be asked to log in or create an account at checkout.</p>
+                        @endguest
+                    </aside>
                 </div>
-                <?php }else{ ?>
-                <div style="background:#eee; text-align:center" class="p-3">
-               <img src="{{asset('/images/images.png')}}"> 
-           @guest
-           <p>Don't have an account <strong style="color:#fed700"><a href="{{route('register')}}">Register</a></strong> OR <strong style="color:#fed700"><a href="{{route('login')}}">Login</a></strong> to continue shopping</p>
-               @else
-               <p>Click<a href=""> Here </a>to Start Shopping</p>
-               @endguest
-                </div>
-                <?php }?>
             </div>
-            
-        </main>
-        
+        @endif
+    </div>
+</main>
 @endsection

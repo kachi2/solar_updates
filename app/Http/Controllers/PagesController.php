@@ -103,8 +103,7 @@ class PagesController extends Controller
         return match ($slug) {
             'home' => app(HomeController::class)->index(),
             'projects' => view('users.pages.projects', [
-                'projects' => Project::inRandomOrder()->get(),
-                'recent' => Project::latest()->take(5)->get(),
+                'projects' => Project::latest()->get(),
             ]),
             'products' => view('users.pages.products', [
                 'prod' => Product::latest()->take(5)->get(),
@@ -131,11 +130,19 @@ class PagesController extends Controller
         ]);
     }
 
-    public function projectsDetails(string $id): View
+    public function projectsDetails(Project $project): View
     {
         return view('users.pages.project-details', [
-            'project' => Project::findOrFail($this->decryptId($id)),
-            'recent' => Project::latest()->take(5)->get(),
+            'project' => $project,
+            'moreProjects' => Project::whereKeyNot($project->id)->latest()->take(3)->get(),
         ]);
+    }
+
+    /**
+     * Old /projects/details/{encrypted id} links → 301 to /project/{slug}.
+     */
+    public function legacyProjectDetails(string $id): RedirectResponse
+    {
+        return redirect()->route('projects.details', Project::findOrFail($this->decryptId($id)), 301);
     }
 }

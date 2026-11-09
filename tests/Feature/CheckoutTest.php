@@ -52,6 +52,34 @@ class CheckoutTest extends TestCase
         $this->assertEquals(251, $item->payable);
     }
 
+    public function test_checkout_page_shows_address_and_the_amount_actually_charged(): void
+    {
+        $user = $this->createCustomer();
+        $this->createDefaultAddress($user, ['receiver_name' => 'Ada Obi', 'receiver_phone' => '8031112222', 'city' => 'Ikeja', 'state' => 'Lagos']);
+        $this->fillCart(); // 2 × ₦125.50
+
+        $this->actingAs($user)->get(route('checkout.index'))
+            ->assertOk()
+            ->assertSee('Ada Obi')
+            ->assertSee('8031112222')
+            ->assertSee('Ikeja, Lagos')
+            ->assertDontSee('₦800')
+            ->assertSee('₦251')
+            ->assertSee('name="payment_method" value="card"', false)
+            ->assertDontSee('Add a delivery address to place your order.');
+    }
+
+    public function test_place_order_is_disabled_without_an_address(): void
+    {
+        $user = $this->createCustomer();
+        $this->fillCart();
+
+        $this->actingAs($user)->get(route('checkout.index'))
+            ->assertOk()
+            ->assertSee("You haven't added a delivery address yet.", false)
+            ->assertSee('Add a delivery address to place your order.');
+    }
+
     public function test_manual_payment_places_the_order_and_clears_the_cart(): void
     {
         $user = $this->createCustomer();
@@ -60,9 +88,16 @@ class CheckoutTest extends TestCase
         $this->actingAs($user)->get(route('checkout.index'));
 
         $this->actingAs($user)
-            ->post(route('checkout.store'), ['payment_method' => 'transfer'])
+            ->post(route('checkout.store'), ['payment_method' => 'cash_delivery'])
             ->assertOk()
-            ->assertViewIs('users.products.orders');
+            ->assertViewIs('users.products.orders')
+            ->assertSee('Thank you, your order has been placed.')
+            ->assertSee('2 × ₦126') // 2 × ₦125.50, shown rounded
+            ->assertSee('₦251')
+            ->assertDontSee('₦0')
+            ->assertSee('Awaiting payment')
+            ->assertSee('Processing')
+            ->assertSee('Pay on delivery', false);
 
         $order = Order::where('user_id', $user->id)->firstOrFail();
         $this->assertEquals(251, $order->amount);
@@ -76,15 +111,22 @@ class CheckoutTest extends TestCase
     {
         config(['services.flutterwave.public_key' => 'FLWPUBK_TEST-abc']);
         $user = $this->createCustomer();
-        $this->createDefaultAddress($user);
+        $this->createDefaultAddress($user, ['receiver_name' => 'Ada Obi', 'receiver_phone' => '8031112222']);
         $this->fillCart();
         $this->actingAs($user)->get(route('checkout.index'));
 
-        $this->actingAs($user)
+        $response = $this->actingAs($user)
             ->post(route('checkout.store'), ['payment_method' => 'card'])
             ->assertOk()
             ->assertViewIs('users.products.checkouts')
-            ->assertSee('FLWPUBK_TEST-abc', false);
+            ->assertSee('FLWPUBK_TEST-abc', false)
+            ->assertSee('Ada Obi')
+            ->assertSee('8031112222')
+            ->assertSee('Pay ₦251')
+            ->assertSee('amount: 251,', false);
+
+        $order = Order::where('user_id', $user->id)->firstOrFail();
+        $response->assertSee('Order #'.$order->order_No);
 
         $this->assertFalse(Cart::isEmpty(), 'Cart is kept until Flutterwave confirms payment');
     }

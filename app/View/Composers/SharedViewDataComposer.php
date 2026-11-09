@@ -38,7 +38,7 @@ class SharedViewDataComposer
     {
         return $this->data ??= [
             'menu' => Menu::all(),
-            'menu_categories' => Category::all(),
+            'menu_categories' => Category::withCount('products')->get(),
             'product_menu' => Product::where('status', '!=', 1)->get(),
             'unread_notify' => AdminNotify::where('is_read', 0)->latest()->take(10)->get(),
             'read_notify' => AdminNotify::where('is_read', 1)->latest()->take(2)->get(),

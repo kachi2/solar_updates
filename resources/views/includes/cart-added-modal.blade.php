@@ -167,9 +167,9 @@
                 <strong id="cartAddedTotal"></strong>
             </div>
         </div>
-        <div class="cart-added-actions">
-            <a class="cart-added-checkout" href="{{ route('checkout.index') }}">Proceed to Checkout</a>
-            <a class="cart-added-view" href="{{ route('carts.index') }}">View Cart</a>
+        <div class="cart-added-actions cart-added-actions--split">
+            <button type="button" class="cart-added-continue js-cart-continue">Continue Shopping</button>
+            <a class="cart-added-checkout" href="{{ route('carts.index') }}">View Cart</a>
         </div>
     </section>
 </div>

@@ -1,257 +1,171 @@
 @extends('layouts.app')
+@section('title', 'Payment · ')
 @section('content')
+@php
+    $subtotal = (float) Cart::getSubTotal(false);
+    $itemCount = (int) Cart::getTotalQuantity();
+    $usdRate = (float) ($dollar_exchange_rate->rate ?? 0);
+@endphp
+<main id="content" role="main" class="sofar-cart sofar-checkout">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb sofar-cart__breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('carts.index') }}">Cart</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('checkout.index') }}">Checkout</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Payment</li>
+            </ol>
+        </nav>
 
-   <main id="content" role="main" class="checkout-page">
-            <!-- breadcrumb -->
-            <div class="bg-gray-13 bg-md-transparent">
-                <div class="container">
-                    <!-- breadcrumb -->
-                    <div class="my-md-3">
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-3 flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble">
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="">Checkout</a></li>
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1 active" aria-current="page">Payment</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <!-- End breadcrumb -->
-                </div>
+        <div class="sofar-cart__head">
+            <h1 class="sofar-cart__title">
+                Payment
+                @isset($order)
+                    <span>Order #{{ $order->order_No }}</span>
+                @endisset
+            </h1>
+        </div>
+
+        @if ($errors->any())
+            <div class="sofar-checkout__alert sofar-checkout__alert--error" role="alert">
+                @foreach ($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
             </div>
-            <!-- End breadcrumb -->
+        @endif
 
-            <div class="container">
-                <div class="mb-5">
-                    <h4 class="text-center ">Payment</h4>
-					@include('includes.message') 
-                </div>
-                <!-- Accordion -->
-                <!-- End Accordion -->
+        <div class="row">
+            <div class="col-lg-7 col-xl-8">
+                <!-- Delivering to -->
+                <section class="sofar-checkout-step">
+                    <div class="sofar-checkout-step__head">
+                        <h2 class="sofar-checkout-step__title"><span>1</span> Delivering to</h2>
+                    </div>
+                    @if ($address)
+                        <address class="sofar-checkout-address mb-0">
+                            <strong>{{ $address->receiver_name }}</strong>
+                            <span>{{ $address->address }}</span>
+                            <span>{{ collect([$address->city, $address->state])->filter()->implode(', ') }}</span>
+                            <span class="sofar-checkout-address__contact">
+                                {{ collect([$address->receiver_phone, $address->receiver_email])->filter()->implode(' · ') }}
+                            </span>
+                        </address>
+                    @endif
+                </section>
 
-                    <div class="row">
-                   
-                        <div class="col-lg-4 order-lg-2 mb-7 mb-lg-0">
-                            <div class="pl-lg-3 ">
-                                <div class="bg-gray-1 rounded-lg">
-                                    <!-- Order Summary -->
-                                    
-                                    <div class="p-4 mb-4 checkout-table">
-                                        <!-- Title -->
-                                        <div class="border-bottom border-color-1 mb-5">
-                                            <h6 class="section-title mb-0 "><strong>Your order ({{count($cart)}} items)</strong></h6>
-                                        </div>
-                                      <!-- Product Content -->
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th class="product-name"></th>
-                                                    <th class="product-name">Product</th>
-                                                    <th class="product-total">Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            @foreach($cart as $carts)
-                                                <tr class="cart_item">
-                                                    <td><img width="40px" height="40px"src="{{asset('/images/products/'.$carts->model->image )}}"></td>
-                                                    <td style="font-size:12px">{{$carts->model->name}}<strong class="product-quantity"><br>QTY:{{$carts->quantity}}</strong></td>
-                                                    <td style="font-size:12px">₦{{number_format($carts->price * $carts->quantity, 2)}}</td>
-                                                </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot>
-                                             <tr>
-                                                    <th></th>
-													<th></th>
-                                                    
-                                                </tr>
-                                                @php
-                                                $cart = \Cart::getSubTotal(false);
-                                                $total = \Cart::getSubTotal(false);
-                                                @endphp
-                                                <tr>
-                                                    <th>Total</th>
-													<td></td>
-                                                    <td><strong>₦{{number_format($total, 2)}}</strong></td>
-                                                </tr>
-                                                
-                                            </tfoot>
-                                        </table>
-                                        
-                                        <script src="https://checkout.flutterwave.com/v3.js"></script>
-                                        <form>
-                                        <button type="button" onClick="makePayment()" id="btnsubmit2" class="btn btn-primary btn-block  btn-sm ">Pay Now</button>
-                                    </form>
-                                    </div>
-                                    <!-- End Order Summary -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-8 order-lg-1">
-                          
-               <div class="row">
-                      <div class="mb-6 col-xl-12">
-                       <table class="table table-bordered" cellspacing="0">
-                            <thead>
-                            <tr>
-                            <th class="defaults mb-0">Shipping Address </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                        
-                            <td> 
-                            
-                            
-                            Receiver:{{$address->name}} <br>
-                            Address: {{$address->address}} <br>
-                            City: {{$address->city . $address->state}} <br>
-                            Email: {{$address->email}} <br>
-                            Phone: {{$address->phone}} <br>
-
-                           
-                            </td>
-                            </tr>
-                         
-                           <tr><td>
-                                </td>
-                                </tr>
-                              
-                                </tr>
-                                  </tbody>
-                                </table>
-                 
-             </div>
-                        </div>
-                        
-                        <div class="row">
-                      <div class="mb-6 col-xl-12">
-                       <table class="table table-bordered" cellspacing="0">
-                            <thead>
-                            <tr>
-                            <th class=" mb-0">Payment Method</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                            <td> 
-                   <div class="border-top border-width-3 border-color-1 pt-3 mb-3">
-                                        
-                                                <div class="border-bottom border-color-1 border-dotted-bottom">
-                                                    <div class="p-3" id="basicsHeadingFour">
-                                                        <div class="custom-control custom-radio">
-                                                            <input type="radio" class="custom-control-input" id="FourstylishRadio1" value="card" name="payment_method" checked>
-                                                            <label class="custom-control-label form-label" for="FourstylishRadio1"
-                                                                data-toggle="collapse"
-                                                                data-target="#basicsCollapseFour"
-                                                                aria-expanded="false"
-                                                                aria-controls="basicsCollapseFour">
-                                                                Pay with Debit Card
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div id="basicsCollapseFour" class="collapse border-top border-color-1 border-dotted-top bg-dark-lighter"
-                                                        aria-labelledby="basicsHeadingFour"
-                                                        data-parent="#basicsAccordion1">
-                                                        <div class="p-4">
-                                                            You can pay with your VISA, MasterCard, Verve Cards on our secured platform
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                              
-                                                <!-- End Card -->
-                                            </div>
-                                            <!-- End Basics Accordion -->
-                                        </div>
-                            </td>
-                            </tr>
-                            </tbody>
-                            </table>
-                            
-                  
-             </div>
+                <!-- Pay -->
+                <section class="sofar-checkout-step">
+                    <div class="sofar-checkout-step__head">
+                        <h2 class="sofar-checkout-step__title"><span>2</span> Pay with card</h2>
+                    </div>
+                    <div class="sofar-pay-method">
+                        <i class="far fa-credit-card sofar-pay-method__icon" aria-hidden="true"></i>
+                        <div>
+                            <p class="sofar-pay-method__name">Visa, Mastercard or Verve</p>
+                            <p class="sofar-pay-method__desc">
+                                When you click <strong>Pay</strong>, a secure Flutterwave window opens to take your card
+                                details. Sofar Solar never sees or stores your card number.
+                            </p>
                         </div>
                     </div>
-                     
+                    <ol class="sofar-pay-steps">
+                        <li>Enter your card details in the Flutterwave window.</li>
+                        <li>Confirm with the OTP or PIN your bank sends you.</li>
+                        <li>You'll come back here with your order confirmation.</li>
+                    </ol>
+                </section>
             </div>
-        </main>
 
+            <!-- Summary -->
+            <div class="col-lg-5 col-xl-4">
+                <aside class="sofar-cart-summary">
+                    <h2 class="sofar-cart-summary__title">Order summary</h2>
+
+                    <ul class="sofar-checkout-lines">
+                        @foreach ($cart as $item)
+                            <li>
+                                <span class="sofar-checkout-lines__thumb">
+                                    <img src="{{ asset('images/products/'.rawurlencode((string) ($item->model->image ?? $item->attributes->image))) }}" alt="" loading="lazy">
+                                    <span class="sofar-checkout-lines__qty">{{ $item->quantity }}</span>
+                                </span>
+                                <span class="sofar-checkout-lines__name">{{ $item->name }}</span>
+                                <span class="sofar-checkout-lines__price">₦{{ number_format($item->price * $item->quantity) }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <dl class="sofar-cart-summary__rows">
+                        <div>
+                            <dt>Subtotal ({{ $itemCount }} {{ \Illuminate\Support\Str::plural('item', $itemCount) }})</dt>
+                            <dd>₦{{ number_format($subtotal) }}</dd>
+                        </div>
+                        <div>
+                            <dt>Delivery</dt>
+                            <dd class="sofar-cart-summary__muted">Arranged after your order</dd>
+                        </div>
+                    </dl>
+                    <div class="sofar-cart-summary__total">
+                        <span>To pay now</span>
+                        <strong>₦{{ number_format($subtotal) }}</strong>
+                    </div>
+                    @if ($usdRate > 0)
+                        <p class="sofar-cart-summary__usd">≈ {{ number_format($subtotal / $usdRate) }} USD</p>
+                    @endif
+
+                    <button type="button" id="payNowButton" class="sofar-cart-btn sofar-cart-btn--block">
+                        <i class="fas fa-lock" aria-hidden="true"></i> Pay ₦{{ number_format($subtotal) }}
+                    </button>
+                    <p class="sofar-cart-summary__note">Secured by Flutterwave</p>
+                </aside>
+            </div>
+        </div>
+    </div>
+</main>
 @endsection
 
 @section('scripts')
+<script src="https://checkout.flutterwave.com/v3.js"></script>
 <script>
+    $(function () {
+        var $payButton = $('#payNowButton');
 
-let total_paid = {!! json_encode(\Cart::getSubTotal(false))!!};
-let fare = 1;
-let total = parseInt(total_paid) + parseInt(fare);
-// $('.toggleM').on('change', function(){
-// 	//alert(document.getElementById('fees').value);
-// 	if(document.getElementById('home_delivery').checked == true){
-// 	 $('#shipment').html('<span class="font-weight-bold">'+'₦'+thousands_separators(fare)+'</span>'); 
-// 	 $('#home_de').attr('hidden', false);
-// 	 $('#pickup_de').attr('hidden', true);
-// 	 $('#fee').attr('value', fare);
-// 	  $('#total_paid').html('₦'+thousands_separators(total)); 
-// 	}else{
-//  	$('#shipment').html('<span class="font-weight-bold">'+'₦'+0+'</span>'); 
-// 		$('#pickup_de').attr('hidden', false);
-// 		 $('#fees').attr('value', 0);
-// 		$('#total_paid').html('₦'+thousands_separators(total_paid)); 
-// 		$('#home_de').attr('hidden', true);
-// 	}
-// });
+        $payButton.on('click', function () {
+            if (typeof FlutterwaveCheckout !== 'function') {
+                window.alert('The payment window could not load. Please check your connection and try again.');
+                return;
+            }
 
+            $payButton.prop('disabled', true);
 
-
-
-var _token = {!!  json_encode(config('services.flutterwave.public_key'))!!}
-let email = {!! json_encode(auth()->user()->email) !!};
-let phone = {!! json_encode(auth()->user()->phone) !!};
-let name = {!! json_encode(auth()->user()->name) !!};
-let amounts = {!! json_encode(\Cart::getSubTotal(false))!!}
-
- function makePayment() {
-    FlutterwaveCheckout({
-      public_key: _token,
-      tx_ref: "SFSL"+Math.floor((Math.random() * 1000000) + 1),
-      amount: amounts,
-      currency: "NGN",
-      country: "NG",
-      payment_options: "card, ussd",
-     // redirect_url: // specified redirect URL
-       // https://callbacks.piedpiper.com/flutterwave.aspx?ismobile=34",
-      meta: {
-        consumer_id: 1,
-        consumer_mac: "92a3-912ba-1192a",
-        purpose: "Payment for Order",
-        
-      },
-      customer: {
-        email: email,
-        phone_number: phone,
-        name: name,
-      },
-       callback: function (response) {
-          var transactionId = encodeURIComponent(String(response.transaction_id));
-          var confirmationUrl = @json(route('confirm.payment', ['id' => '__TRANSACTION_ID__']));
-          window.location = confirmationUrl.replace('__TRANSACTION_ID__', transactionId);
-      },
-      onclose: function() {
-        // close modal
-      },
-      customizations: {
-        title: "Sofarsolar",
-        description: "Payment for Order",
-       logo: "",
-      },
+            FlutterwaveCheckout({
+                public_key: @json(config('services.flutterwave.public_key')),
+                tx_ref: 'SFSL' + Math.floor((Math.random() * 1000000) + 1),
+                amount: @json($subtotal),
+                currency: 'NGN',
+                country: 'NG',
+                payment_options: 'card, ussd',
+                meta: {
+                    purpose: 'Payment for Order'
+                },
+                customer: {
+                    email: @json(auth()->user()->email),
+                    phone_number: @json(auth()->user()->phone),
+                    name: @json(auth()->user()->name)
+                },
+                callback: function (response) {
+                    var transactionId = encodeURIComponent(String(response.transaction_id));
+                    var confirmationUrl = @json(route('confirm.payment', ['id' => '__TRANSACTION_ID__']));
+                    window.location = confirmationUrl.replace('__TRANSACTION_ID__', transactionId);
+                },
+                onclose: function () {
+                    $payButton.prop('disabled', false);
+                },
+                customizations: {
+                    title: 'Sofar Solar',
+                    description: 'Payment for Order'
+                }
+            });
+        });
     });
-  };
-function thousands_separators(num)
-  {
-    var num_parts = num.toString().split(".");
-    num_parts[0] = num_parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    return num_parts.join(".");
-  }
-  
 </script>
-
 @endsection

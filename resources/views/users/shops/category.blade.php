@@ -29,7 +29,7 @@
 						<ul id="cate_list" class="cate_list">
                         @foreach( $menu_categories as $cat )
                        	<li class="level1 nav-1-1 first item">
-										<a href="{{route('user.category', encrypt($cat->id))}}" title="{{$cat->name}}">
+										<a href="{{route('user.category', $cat)}}" title="{{$cat->name}}">
 										  {{$cat->name}}
 											<span class="count-item">{{count($cat->products)}}</span>
 										</a>

@@ -18,7 +18,8 @@
             <link rel="stylesheet" href="{{asset('/frontend/vendor/fancybox/jquery.fancybox.css')}}">
             <link rel="stylesheet" href="{{asset('/frontend/vendor/slick-carousel/slick/slick.css')}}">
             <link rel="stylesheet" href="{{asset('/frontend/vendor/bootstrap-select/dist/css/bootstrap-select.min.css')}}">
-            <link rel="stylesheet" href="{{asset('/frontend/css/theme.css')}}">
+            {{-- ?v= changes whenever the file changes, so browsers never keep a stale copy. --}}
+            <link rel="stylesheet" href="{{ asset('/frontend/css/theme.css') }}?v={{ is_file($themeCss = public_path('frontend/css/theme.css')) ? filemtime($themeCss) : '' }}">
         </head>
     <body>
 
@@ -159,7 +160,7 @@
           $.HSCore.components.HSSelectPicker.init('.js-select');
       });
   </script>
-  <script src="{{asset('/frontend/js/sofar-cart.js')}}"></script>
+  <script src="{{ asset('/frontend/js/sofar-cart.js') }}?v={{ is_file($cartJs = public_path('frontend/js/sofar-cart.js')) ? filemtime($cartJs) : '' }}"></script>
 
   @yield('scripts')
 </body>

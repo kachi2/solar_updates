@@ -33,7 +33,7 @@
                                               document.getElementById('logout-form').submit();" class="u-header-topbar__nav-link">  <i class="ec ec-logout mr-1"></i> Logout </a>
                               
                          </li>
-                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                  @csrf
                              </form> 
                             @endguest
@@ -42,7 +42,7 @@
                 </div>
             </div>
         </div>
-        <div class="py-2 py-xl-5 bg-primary-down-lg">
+        <div class="py-2 py-xl-5 header-main">
             <div class="container my-0dot5 my-xl-0">
                 <div class="row align-items-center">
                     <!-- Logo-offcanvas-menu -->
@@ -50,9 +50,8 @@
                         <!-- Nav -->
                         <nav class="navbar navbar-expand u-header__navbar py-0 justify-content-xl-between max-width-270 min-width-270">
                             <!-- Logo -->
-                            <a class="order-1 order-xl-0 navbar-brand u-header__navbar-brand u-header__navbar-brand-center" href="{{route('index')}}" aria-label="">
-                               
-                               <img src="{{asset('/images/logo.png')}}"> 
+                            <a class="order-1 order-xl-0 navbar-brand u-header__navbar-brand u-header__navbar-brand-center header-logo" href="{{route('index')}}" aria-label="Sofar Solar home">
+                               <img src="{{asset('/images/logo.png')}}" alt="Sofar Solar">
                             </a>
                             <!-- End Logo -->
 
@@ -84,8 +83,8 @@
                             <div class="input-group">
                                 <input type="text" value="@if(isset($search)) {{$search}} @endif" class="form-control py-2 pl-5 font-size-15 border-right-0 height-40 border-width-2 border-defaults" name="search" id="searchproduct-item" placeholder="Search for Products" aria-label="Search for Products" aria-describedby="searchProduct1" required>
                                 <div class="input-group-append">
-                                    <button   class="btn border-defaults height-40 py-2 px-3 " style="background:#103178" type="submit" id="searchProduct1">
-                                        <span class="text-white" style="color:#fff">SEARCH</span>
+                                    <button class="btn border-defaults height-40 py-2 px-3 header-search-submit" type="submit" id="searchProduct1">
+                                        SEARCH
                                     </button>
                                 </div>
                             </div>
@@ -96,7 +95,7 @@
                             <ul class="d-flex list-unstyled mb-0 align-items-center">
                                 <!-- Search -->
                                 <li class="col d-xl-none px-2 px-sm-3 position-static">
-                                    <a id="searchClassicInvoker" class="font-size-22 text-gray-90 text-lh-1 btn-text-secondary" href="javascript:;" role="button"
+                                    <a id="searchClassicInvoker" class="header-icon text-gray-90" href="javascript:;" role="button" aria-label="Search"
                                         data-toggle="tooltip"
                                         data-placement="top"
                                         title="Search"
@@ -110,15 +109,15 @@
                                         data-unfold-hide-on-scroll="true"
                                         data-unfold-animation-in="slideInUp"
                                         data-unfold-animation-out="fadeOut">
-                                        <span class="ec ec-search"></span>
+                                        <i class="font-size-22 ec ec-search" aria-hidden="true"></i>
                                     </a>
 
                                     <!-- Input -->
-                                    <div id="searchClassic" class="dropdown-menu dropdown-unfold dropdown-menu-right left-0 mx-2" aria-labelledby="searchClassicInvoker">
-                                        <form action="{{ route('search') }}" method="GET" class="js-focus-state input-group px-3">
-                                            <input class="form-control" type="text" name="search" placeholder="Search Product" value="@if(isset($search)) {{$search}} @endif ">
+                                    <div id="searchClassic" class="dropdown-menu dropdown-unfold dropdown-menu-right left-0 mx-2 header-mobile-search" aria-labelledby="searchClassicInvoker">
+                                        <form action="{{ route('search') }}" method="GET" class="js-focus-state input-group">
+                                            <input class="form-control" type="search" name="search" placeholder="Search inverters, batteries, panels…" aria-label="Search products" value="{{ $search ?? '' }}">
                                             <div class="input-group-append">
-                                                <button class="btn border- px-3" type="submit"><i class="font-size-18 ec ec-search"></i></button>
+                                                <button class="btn" type="submit" aria-label="Search"><i class="ec ec-search" aria-hidden="true"></i></button>
                                             </div>
                                         </form>
                                     </div>
@@ -225,7 +224,7 @@
                                                 aria-expanded="true"
                                                  aria-controls="sidebarNav1Collapse"
                                                   data-target="#sidebarNav1Collapse">
-                                                    <a id="basicMegaMenu" class="nav-link u-header__nav-link u-header__nav-link-toggle" href="{{route('user.category', encrypt($cat->id))}}" aria-haspopup="true" aria-expanded="false">{{$cat->name}}</a>
+                                                    <a id="basicMegaMenu" class="nav-link u-header__nav-link u-header__nav-link-toggle" href="{{route('user.category', $cat)}}" aria-haspopup="true" aria-expanded="false">{{$cat->name}}</a>
                                                     <div class="hs-mega-menu vmm-tfw u-header__sub-menu" aria-labelledby="basicMegaMenu">
                                                         <div class="row u-header__mega-menu-wrapper">
                                                           
@@ -233,7 +232,7 @@
                                                                 <span class="u-header__sub-menu-title">{{$cat->name}}</span>
                                                                 <ul class="u-header__sub-menu-nav-group">
                                                                     @foreach($cat->subCategories as $pro)
-                                                                    <li><a class="nav-link u-header__sub-menu-nav-link" href="{{route('user.category', encrypt($pro->id))}}">{{$pro->name}}</a></li>
+                                                                    <li><a class="nav-link u-header__sub-menu-nav-link" href="{{route('user.category', $cat)}}">{{$pro->name}}</a></li>
                                                                     @endforeach
                                                                 </ul>
                                                             </div>

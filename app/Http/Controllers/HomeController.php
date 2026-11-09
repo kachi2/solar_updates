@@ -15,7 +15,6 @@ use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -49,23 +48,36 @@ class HomeController extends Controller
         // `views` can be NULL in legacy rows, so don't use increment() (NULL + 1 = NULL in SQL).
         $product->update(['views' => (int) $product->views + 1]);
 
+        $reviews = Review::where('product_id', $product->id);
+
         return view('users.products.products', [
-            'rating' => Review::where('product_id', $product->id)->latest()->take(3)->get(),
-            'recent' => $this->recentlyViewed(5),
-            'related' => Product::where('category_id', $product->category_id)->take(5)->get(),
+            'rating' => (clone $reviews)->latest()->take(3)->get(),
+            'reviewCount' => (clone $reviews)->count(),
+            'averageRating' => round((float) (clone $reviews)->avg('rating'), 1),
+            'recent' => $this->recentlyViewed(4),
+            'related' => Product::where('category_id', $product->category_id)->whereKeyNot($product->id)->take(4)->get(),
             'title' => $product->name,
             'product' => $product,
-            'products' => Product::latest()->take(5)->get(),
             'breadcrumb' => $product->name,
-            'category' => Category::latest()->get(),
         ]);
     }
 
-    public function category(string $id): View
+    /**
+     * /category/{slug}. Old /category/{encrypted id} links (they start with "eyJ")
+     * share the same path, so they are recognised here and redirected permanently.
+     */
+    public function category(string $category): View|RedirectResponse
     {
+        if (str_starts_with($category, 'eyJ')) {
+            return redirect()->route('user.category', Category::findOrFail($this->decryptId($category)), 301);
+        }
+
+        $category = Category::where('slug', $category)->firstOrFail();
+
         return view('users.pages.products', [
-            'products' => Product::where('category_id', $this->decryptId($id))->simplePaginate(20),
+            'products' => Product::where('category_id', $category->id)->simplePaginate(20),
             'prod' => Product::latest()->take(5)->get(),
+            'currentCategory' => $category,
         ]);
     }
 
@@ -90,15 +102,20 @@ class HomeController extends Controller
             'description' => $request->input('description'),
         ]);
 
-        return back();
+        return redirect()->to(route('product-details', $product).'#pdTabs')
+            ->with('review_status', 'Thank you! Your review has been posted.');
     }
 
     // ---- Account --------------------------------------------------------
 
     public function account(Request $request): View
     {
+        $user = $request->user();
+
         return view('users.accounts.index', [
-            'addresses' => $request->user()->shippings()->where('is_default', 1)->get(),
+            'addresses' => $user->shippings()->where('is_default', 1)->get(),
+            'recentOrders' => Order::where('user_id', $user->id)->with('items')->latest()->take(3)->get(),
+            'orderCount' => Order::where('user_id', $user->id)->count(),
             'title' => 'My Details',
         ]);
     }
@@ -124,11 +141,11 @@ class HomeController extends Controller
 
     public function myOrders(Request $request): View
     {
-        $orders = DB::table('orders')
-            ->join('order_items', 'orders.order_No', '=', 'order_items.order_No')
-            ->where('orders.user_id', $request->user()->id)
-            ->latest('orders.created_at')
-            ->paginate(8);
+        // One row per order (the old join listed every order line separately).
+        $orders = Order::where('user_id', $request->user()->id)
+            ->with('items')
+            ->latest()
+            ->paginate(10);
 
         return view('users.accounts.orders', compact('orders'));
     }
@@ -177,7 +194,8 @@ class HomeController extends Controller
     public function addresses(Request $request): View
     {
         return view('users.accounts.address', [
-            'addresses' => $request->user()->shippings()->paginate(4),
+            // Default address first, then newest.
+            'addresses' => $request->user()->shippings()->orderByDesc('is_default')->latest()->paginate(12),
             'title' => 'My Details',
         ]);
     }
@@ -193,6 +211,7 @@ class HomeController extends Controller
     {
         return view('users.accounts.update-address', [
             'addresses' => $request->user()->shippings()->whereKey($this->decryptId($id))->get()->whenEmpty(fn () => abort(404)),
+            'canRemove' => $request->user()->shippings()->count() > 1,
         ]);
     }
 
@@ -204,34 +223,66 @@ class HomeController extends Controller
     {
         $user = $request->user();
 
+        $hasDefault = $user->shippings()->where('is_default', 1)->exists();
+
         if ($request->filled('update')) {
             $address = $user->shippings()->findOrFail($id);
             $address->fill($request->shippingAttributes());
 
-            if ($request->boolean('default')) {
+            // Making this the default unsets the old one. The current default stays
+            // default until another address is chosen, so checkout always has one.
+            if ($request->boolean('default') && (int) $address->is_default !== 1) {
                 $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
                 $address->is_default = 1;
-            } else {
-                $address->is_default = 0;
             }
 
             $address->save();
 
-            return back()->with('success', 'Address updated successfully');
+            return redirect()->route('users.address')->with('success', 'Address updated.');
         }
 
-        $user->shippings()->create($request->shippingAttributes() + [
-            'is_default' => $user->shippings()->where('is_default', 1)->exists() ? 0 : 1,
-        ]);
+        $makeDefault = $request->boolean('default') || ! $hasDefault;
 
-        return back()->with('success', 'Address Added successfully');
+        if ($makeDefault) {
+            $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
+        }
+
+        $user->shippings()->create($request->shippingAttributes() + ['is_default' => $makeDefault ? 1 : 0]);
+
+        return redirect()->route('users.address')->with('success', 'Address added.');
     }
 
     public function deleteAddress(Request $request, string $id): RedirectResponse
     {
-        $request->user()->shippings()->findOrFail($this->decryptId($id))->delete();
+        $user = $request->user();
+        $address = $user->shippings()->findOrFail($this->decryptId($id));
 
-        return back()->with('error', 'Address Deleted Successfully');
+        // Checkout needs an address, so the last one can't be removed.
+        if ($user->shippings()->count() <= 1) {
+            return redirect()->route('users.address')
+                ->with('error', 'You need at least one delivery address. Add another address before removing this one.');
+        }
+
+        $wasDefault = (int) $address->is_default === 1;
+        $address->delete();
+
+        // Checkout needs a default address: promote the newest remaining one.
+        if ($wasDefault) {
+            $user->shippings()->latest()->first()?->update(['is_default' => 1]);
+        }
+
+        return back()->with('success', 'Address removed.');
+    }
+
+    public function setDefaultAddress(Request $request, string $id): RedirectResponse
+    {
+        $user = $request->user();
+        $address = $user->shippings()->findOrFail($this->decryptId($id));
+
+        $user->shippings()->where('is_default', 1)->update(['is_default' => 0]);
+        $address->update(['is_default' => 1]);
+
+        return back()->with('success', 'Default delivery address updated.');
     }
 
     /**

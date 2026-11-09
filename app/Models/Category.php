@@ -2,13 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSlug;
+
+    /**
+     * route('user.category', $category) builds /category/{slug}.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
     protected $table = 'categories';
 

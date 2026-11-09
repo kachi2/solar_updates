@@ -22,41 +22,39 @@
             <div class="container">
                 <div class="row mb-8">
                     <div class="d-none d-xl-block col-xl-3 col-wd-2gdot5">
-                        <div class="mb-6 border border-width-2 border-color-3 borders-radius-6">
-                            <!-- List -->
-                            <ul id="sidebarNav" class="list-unstyled mb-0 sidebar-navbar view-all">
-                                <li><div class="dropdown-title">Browse Categories</div></li>
-                               @foreach($menu_categories as $catt)
-                                <li><a class="dropdown-item" href="{{route('user.category',encrypt($catt->id))}}">{{$catt->name}}</a></li>
+                        <div class="mb-6">
+                            @include('includes.category-card', [
+                                'activeCategoryId' => isset($currentCategory) ? $currentCategory->id : null,
+                                'allActive' => ! isset($currentCategory) && ! isset($search),
+                            ])
+                        </div>
+                        <section class="sofar-side-card" aria-labelledby="latestProductsTitle">
+                            <h2 class="sofar-side-card__title" id="latestProductsTitle">Latest products</h2>
+                            <ul class="sofar-mini-products">
+                                @foreach ($prod as $prods)
+                                    @php
+                                        $miniOld = (float) $prods->price;
+                                        $miniNow = (float) $prods->sale_price;
+                                    @endphp
+                                    <li>
+                                        <a href="{{ route('product-details', $prods) }}" class="sofar-mini-product">
+                                            <span class="sofar-mini-product__thumb">
+                                                <img src="{{ asset('images/products/'.rawurlencode((string) $prods->image)) }}" alt="" loading="lazy">
+                                            </span>
+                                            <span class="sofar-mini-product__info">
+                                                <span class="sofar-mini-product__name">{{ $prods->name }}</span>
+                                                <span class="sofar-mini-product__price">
+                                                    ₦{{ number_format($miniNow) }}
+                                                    @if ($miniOld > $miniNow)
+                                                        <del>₦{{ number_format($miniOld) }}</del>
+                                                    @endif
+                                                </span>
+                                            </span>
+                                        </a>
+                                    </li>
                                 @endforeach
                             </ul>
-                            <!-- End List -->
-                        </div>
-                        <div class="mb-8">
-                            <div class="border-bottom border-color-1 mb-5">
-                                <h3 class="section-title section-title__sm mb-0 pb-2 font-size-18">Latest Products</h3>
-                            </div>
-                            <ul class="list-unstyled">
-                               @foreach($prod as $prods)
-                                <li class="mb-4">
-                                    <div class="row">
-                                        <div class="col-auto">
-                                            <a href="{{route('product-details', $prods)}}" class="d-block width-75">
-                                                <img class="img-fluid" src="{{asset('images/products/'.$prods->image)}}" alt="Image Description">
-                                            </a>
-                                        </div>
-                                        <div class="col">
-                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details', $prods)}}">{{$prods->name}}</a></h3>
-                                            <div class="font-weight-bold">
-                                                <del class="font-size-15 text-red d-block">₦{{number_format($prods->price)}}</del>
-                                                <ins class="font-size-15  text-gray-9 text-decoration-none d-block">₦{{number_format($prods->sale_price)}}</ins>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                @endforeach
-                            </ul>
-                        </div>
+                        </section>
                     </div>
                     <div class="col-xl-9 col-wd-9gdot5">
                         <!-- Recommended Products -->

@@ -32,7 +32,7 @@
 				<!--Account top banner : End-->
 				<div class="row acc-order">
 					<!--Account Sidebar: End-->
-						@include('includes.sidebar')
+						@include('includes.accountNav')
 						<!--Account Sidebar: End-->
 					<!--Account main content : Begin -->
 				<section class="account-main col-md-9 col-sm-8 col-xs-12">

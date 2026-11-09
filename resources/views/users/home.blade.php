@@ -90,7 +90,7 @@
 			<div class="row">
 				@foreach ($categories as  $xs)
 				<div class="col-md-6 mb-4 mb-xl-0 col-xl-3">
-					<a href="{{route('user.category', encrypt($xs->id))}}" class="sofar-cat-card">
+					<a href="{{route('user.category', $xs)}}" class="sofar-cat-card">
 						<span class="sofar-cat-card__media">
 							<img class="sofar-cat-card__img" src="{{asset('/images/category/'.$xs->image)}}" alt="{{ $xs->name }}" loading="lazy">
 						</span>

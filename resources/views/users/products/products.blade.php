@@ -1,367 +1,231 @@
+@extends('layouts.app')
+@section('title', $title)
+@section('content')
+@php
+    // Main image first, then gallery images (no duplicates / empties).
+    $images = collect([$product->image])
+        ->merge(json_decode((string) $product->gallery, true) ?: [])
+        ->filter()
+        ->unique()
+        ->values();
+    $price = (float) $product->sale_price;
+    $oldPrice = (float) $product->price;
+    $discount = $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
+    $roundedRating = (int) round($averageRating);
+    $whatsappText = "Hello Sofar Solar, I'd like to order:\n".$product->name."\nPrice: ₦".number_format($price);
+    $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='.rawurlencode($whatsappText);
+@endphp
+<main id="content" role="main" class="sofar-pd">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="sofar-pd__breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('index') }}">Home</a></li>
+                @if ($product->category)
+                    <li class="breadcrumb-item"><a href="{{ route('user.category', $product->category) }}">{{ $product->category->name }}</a></li>
+                @endif
+                <li class="breadcrumb-item active" aria-current="page">{{ $title }}</li>
+            </ol>
+        </nav>
 
-     @extends('layouts.app')
-     @section('content')
-     @section('title', $title)
-      <main id="content" role="main">
-            <!-- breadcrumb -->
-            <div class="bg-gray-13 bg-md-transparent">
-                <div class="container">
-                    <!-- breadcrumb -->
-                    <div class="my-md-3">
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-3 flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble">
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="#">Home</a></li>
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1"><a href="">{{$product->category->name}}</a></li>
-                                <li class="breadcrumb-item flex-shrink-0 flex-xl-shrink-1 active" aria-current="page">{{$title}}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <!-- End breadcrumb -->
-                </div>
-            </div>
+        <div class="row">
+            <!-- Sidebar: categories (open by default) -->
+            <aside class="d-none d-xl-block col-xl-3">
+                @include('includes.category-card', ['activeCategoryId' => $product->category_id])
+            </aside>
 
-            <div class="container">
-                <div class="row">
-                    <div class="d-none d-xl-block col-xl-3 col-wd-2gdot5">
-                        <div class="mb-8 border border-width-2 border-color-3 borders-radius-6">
-                            <!-- List -->
-                            <ul id="sidebarNav" class="list-unstyled mb-0 sidebar-navbar">
-                                <li>
-                                    <a class="dropdown-toggle dropdown-toggle-collapse dropdown-title" href="javascript:;"
-									 role="button" 
-									 data-toggle="collapse" 
-									 aria-expanded="false" 
-									  aria-controls="sidebarNav1Collapse"
-									   data-target="#sidebarNav1Collapse">
-                                        Show All Categories
-                                    </a>
-
-                                    <div id="sidebarNav1Collapse" class="collapse" data-parent="#sidebarNav">
-                                        <ul id="sidebarNav1" class="list-unstyled dropdown-list">
-                                            <!-- Menu List -->
-                                            @foreach($category as $catt)
-                                            <li><a class="dropdown-item" href="">{{$catt->name}}</a></li>
-                                            <!-- End Menu List -->
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                </li>
-                              
-                            </ul>
-                            <!-- End List -->
-                        </div>
-                        <div class="mb-8">
-                            <div class="border-bottom border-color-1 mb-5">
-                                <h3 class="section-title section-title__sm mb-0 pb-2 font-size-18">Latest Products</h3>
-                            </div>
-                            <ul class="list-unstyled">
-                                @foreach($products as $prods)
-                                <li class="mb-4">
-                                    <div class="row">
-                                        <div class="col-auto">
-                                       
-                                            <a href="{{route('product-details', $prods)}}" class="d-block width-75">
-                                                <img class="img-fluid" src="{{asset('images/products/'.$prods->image)}}" alt="Image Description">
-                                            </a>
-                                        </div>
-                                        <div class="col">
-                                            <h3 class="text-lh-1dot2 font-size-14 mb-0"><a href="{{route('product-details', $prods)}}">{{$prods->name}}</a></h3>
-                                           
-                                            <div class="font-weight-bold">
-                                                <del class="font-size-15 text-gray-9 d-block">₦{{number_format($prods->price)}} </del>
-                                                
-                                                <ins class="font-size-15 text-red text-decoration-none d-block">₦{{number_format($prods->sale_price)}} / <span style="color:rgb(15, 15, 79); font-size:14px"> {{number_format($prods->exchange_rate)}}  USD </span></ins>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-9 col-wd-9gdot5">
-                        <!-- Single Product Body -->
-                        <div class="mb-xl-14 mb-6">
-                            <div class="row">
-                              <div class="col-md-5 mb-4 mb-md-0">
-                            <div id="sliderSyncingNav" class="js-slick-carousel u-slick mb-2"
-                                data-infinite="true"
-                                data-arrows-classes="d-none d-lg-inline-block u-slick__arrow-classic u-slick__arrow-centered--y rounded-circle"
-                                data-arrow-left-classes="fas fa-arrow-left u-slick__arrow-classic-inner u-slick__arrow-classic-inner--left ml-lg-2 ml-xl-4"
-                                data-arrow-right-classes="fas fa-arrow-right u-slick__arrow-classic-inner u-slick__arrow-classic-inner--right mr-lg-2 mr-xl-4"
-                                data-nav-for="#sliderSyncingThumb">
-								
-                                 @foreach ((json_decode((string) $product->gallery) ?: []) as $key =>$imag)
-                             @if($imag !=null)
-                                <div class="js-slide">
-                                    <img style="width: 300px; max-height:400px;" class="img-fluid" src="{{asset('images/products/'.$imag)}}" alt="Image Description">
-                                </div>
-                                 @endif
-                                   @endforeach
-                            </div>
-
-                            <div id="sliderSyncingThumb" class="js-slick-carousel u-slick u-slick--slider-syncing u-slick--gutters-1 u-slick--transform-off"
-                                data-infinite="true"
-                                data-slides-show="5"
-                                data-is-thumbs="true"
-                                data-nav-for="#sliderSyncingNav">
-                             @foreach ((json_decode((string) $product->gallery) ?: []) as $key =>$imag )
-                             @if($imag !=null)
-                                <div class="js-slide" style="cursor: pointer;">
-                                    <img class="img-fluid" src="{{asset('images/products/'.$imag)}}"alt="Image Description">
-                                </div>
-                                @endif
-                                   @endforeach
-                            </div>
-                        </div>
-                                <div class="col-md-7 mb-md-6 mb-lg-0">
-                                    <div class="mb-2">
-                                        <div class="border-bottom mb-3 pb-md-1 pb-3">
-                                            <a href="#" class="font-size-12 text-gray-5 mb-2 d-inline-block">{{$product->category->name}}</a>
-                                            <h2 class="font-size-25 text-lh-1dot2">{{$title}}</h2>
-                                            <div class="mb-2">
-                                         <p>{{$product->heading}}</p>
-                                             </div>
-                                            <div class="d-md-flex align-items-center">
-                                              Availability: <span class="text-green font-weight-bold"> &nbsp; In-Stock</span></div>
-                                            </div>
-                                        </div>
-                                        <div class="flex-horizontal-center flex-wrap mb-4">
-                                            {{-- <a href="#" class="text-gray-6 font-size-13 mr-2"><i class="ec ec-favorites mr-1 font-size-15"></i> Wishlist</a>
-                                            <a href="#" class="text-gray-6 font-size-13 ml-2"><i class="ec ec-compare mr-1 font-size-15"></i> Compare</a> --}}
-                                        </div>
-                                        <div class="mb-4">
-                                            <div class="d-flex align-items-baseline">
-                                              <ins class="font-size-36 text-decoration-none">₦{{number_format($product->sale_price)}} <span style="color:rgb(15, 15, 79); font-size:14px"> {{number_format($product->exchange_rate)}}  USD </span></ins>
-                                        <del class="font-size-20 ml-2 text-gray-6">₦{{number_format($product->price)}}</del>
-                                             </div>
-                                        </div>
-                                      
-                                        <div class="d-md-flex align-items-end mb-3">
-                                            <div class="max-width-150 mb-4 mb-md-0">
-                                                <h6 class="font-size-14">Quantity</h6>
-                                                <!-- Quantity -->
-                                                 
-                                                    <div class="border rounded-pill py-2 px-3 border-color-1">
-                                                        <div class="js-quantity row align-items-center">
-                                                            <div class="col">
-                                                                <input class="counter js-result form-control h-auto border-0 rounded p-0 shadow-none" name="qty" id="qty2" type="number" value="1">
-                                                            </div>
-                                                          <div class="col-auto pr-1">
-                                                    <a class="js-minus btn btn-icon btn-xs btn-outline-secondary rounded-circle border-0" href="javascript:;">
-                                                        <small class="fas fa-minus btn-icon__inner decrement-btn"></small>
-                                                    </a>
-                                                    <a class="js-plus btn btn-icon btn-xs btn-outline-secondary rounded-circle border-0" href="javascript:;">
-                                                        <small class="fas fa-plus btn-icon__inner increment-btn"></small>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                                <!-- End Quantity -->
-                                            </div>
-                                            <div class="ml-md-3">
-                                        <button  class="btn px-5 btn-primary transition-3d-hover" id="add2cart"><i class="ec ec-add-to-cart mr-2 font-size-20"></i> Add to Cart</button>
-                                       
-                                    </div>
-                                    
-                                </div>
-                                <span class="badge-success p-2 border-radius-5" hidden id="alerts"> Item added to cart successfully</span>
-                                    
+            <div class="col-xl-9">
+                <!-- Product summary -->
+                <section class="sofar-pd-summary">
+                    <div class="row">
+                        <!-- Gallery -->
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="sofar-pd-gallery">
+                                <div class="sofar-pd-gallery__main">
+                                   
+                                    <img id="sofarPdMainImage" src="{{ asset('images/products/'.rawurlencode((string) $images->first())) }}" alt="{{ $product->name }}">
                                 </div>
                             </div>
-                        </div>
-                        <hr>
-                        <!-- End Single Product Body -->
-                        <!-- Single Product Tab -->
-                        <div style="height:50px"></div>
-                        <div class="mb-8">
-                            <div class="position-relative mx-md-6">
-                                <ul class="nav nav-classic nav-tab nav-tab-lg justify-content-xl-center flex-nowrap flex-xl-wrap overflow-auto overflow-xl-visble border-0 pb-1 pb-xl-0 mb-n1 mb-xl-0" id="pills-tab-8" role="tablist">
-                                    <li class="nav-item flex-shrink-0 flex-xl-shrink-1 z-index-2">
-                                        <a class="nav-link active" id="Jpills-one-example1-tab" data-toggle="pill" href="#Jpills-one-example1" role="tab" aria-controls="Jpills-one-example1" aria-selected="true">Description</a>
-                                    </li>
-
-                                    <li class="nav-item flex-shrink-0 flex-xl-shrink-1 z-index-2">
-                                        <a class="nav-link" id="Jpills-two-example1-tab" data-toggle="pill" href="#Jpills-two-example1" role="tab" aria-controls="Jpills-two-example1" aria-selected="true">Specification</a>
+                            <!-- Tabs -->
+                            <section class="sofar-pd-tabs sofar-pd-tabs--inline" id="pdTabs">
+                                <ul class="nav sofar-pd-tabs__nav" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="pd-description-tab" data-toggle="pill" href="#pd-description" role="tab" aria-controls="pd-description" aria-selected="true">Description</a>
                                     </li>
                                    
-                                    <li class="nav-item flex-shrink-0 flex-xl-shrink-1 z-index-2">
-                                        <a class="nav-link" id="Jpills-four-example1-tab" data-toggle="pill" href="#Jpills-four-example1" role="tab" aria-controls="Jpills-four-example1" aria-selected="false">Reviews</a>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="pd-reviews-tab" data-toggle="pill" href="#pd-reviews" role="tab" aria-controls="pd-reviews" aria-selected="false">Reviews <span class="sofar-pd-tabs__count">{{ number_format($reviewCount) }}</span></a>
                                     </li>
                                 </ul>
-                            </div>
-                            <!-- Tab Content -->
-                            <div class="borders-radius-17 border p-4 mt-4 mt-md-0 px-lg-10 px-xl-4 px-wd-10 py-lg-9 py-xl-5 py-wd-9">
-                                <div class="tab-content" id="Jpills-tabContent">
-                                    <div class="tab-pane fade active show" id="Jpills-one-example1" role="tabpanel" aria-labelledby="Jpills-one-example1-tab">
-                                      
-                                       <p>{!!$product->description!!}</p>
-                                 
+
+                                <div class="tab-content sofar-pd-tabs__panel">
+                                    <div class="tab-pane fade show active sofar-pd-description" id="pd-description" role="tabpanel" aria-labelledby="pd-description-tab">
+                                        {!! $product->description !!}
                                     </div>
-                                    <div class="tab-pane fade" id="Jpills-two-example1" role="tabpanel" aria-labelledby="Jpills-two-example1-tab">
-                                      
-                                      @if(isset($product->specification))
-                                    <iframe src="{{asset('images/pdf/'.$product->specification)}}" width="800px" height="500px"> </iframe>
-                                    @endif
-                                     </div>
-                                   
+
                                     
-                                    <div class="tab-pane fade" id="Jpills-four-example1" role="tabpanel" aria-labelledby="Jpills-four-example1-tab">
-                                        <div class="row mb-8">
-                                             <div class="col-md-6" style="border-right:1px solid #ee0">
-                                                 <h5>Customers Review</h5>
-                                                 <hr>
-                                                 @if(count($rating)>0)
-                                            @foreach($rating as $reviews)
-                                        <div class="pb-4">
-                                            <!-- Review Rating -->
-                                            
-                                            <div class="d-flex justify-content-between align-items-center text-secondary font-size-1 mb-2">
-                                                <div class="text-warning text-ls-n2 font-size-16" style="width: 80px;">
-                                                  <?php $xx = 0?> 
-                                                   @while($xx < $reviews->rated)
-                                                    <small class="fas fa-star"></small>
-                                                    <?php $xx++ ?>
-                                                    @endwhile
-                                                    @if($reviews->rated == 1)
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                    @elseif($reviews->rated == 2)
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                    @elseif($reviews->rated == 3)
-                                                    <small class="far fa-star text-muted"></small>
-                                                    <small class="far fa-star text-muted"></small>
-                                                     @elseif($reviews->rated == 4)
-                                                    <small class="far fa-star text-muted"></small>
-                                                    @else($reviews->rated == 5)
-                                                    @endif
-                                                    
-                                                </div>
-                                            </div>
-                                            <!-- End Review Rating -->
 
-                                            <span class="text-gray-90">{{$reviews->description}}</span>
+                                    <div class="tab-pane fade" id="pd-reviews" role="tabpanel" aria-labelledby="pd-reviews-tab">
+                                        <div class="row">
+                                            <div class="col-12 mb-4">
+                                                <h3 class="sofar-pd-tabs__heading">Customer reviews</h3>
+                                                @forelse ($rating as $review)
+                                                    <article class="sofar-review">
+                                                        <div class="sofar-review__head">
+                                                            <span class="sofar-review__avatar">{{ strtoupper(mb_substr((string) $review->name, 0, 1)) ?: '?' }}</span>
+                                                            <div>
+                                                                <strong class="sofar-review__name">{{ $review->name }}</strong>
+                                                                <span class="sofar-review__date">{{ $review->created_at?->format('d M Y') }}</span>
+                                                            </div>
+                                                            <span class="sofar-stars sofar-review__stars" aria-label="Rated {{ (int) $review->rating }} out of 5">
+                                                                @for ($i = 1; $i <= 5; $i++)
+                                                                    <i class="{{ $i <= (int) $review->rating ? 'fas' : 'far' }} fa-star" aria-hidden="true"></i>
+                                                                @endfor
+                                                            </span>
+                                                        </div>
+                                                        <p class="sofar-review__text">{{ $review->description }}</p>
+                                                    </article>
+                                                @empty
+                                                    <p class="sofar-pd-muted">There are no reviews for this product yet. Be the first to write one.</p>
+                                                @endforelse
+                                            </div>
 
-                                            <!-- Reviewer -->
-                                            <div class="mb-2">
-                                                
-                                                <strong>{{$reviews->email}}</strong><br>
-                                                 <strong>{{$reviews->name}}</strong>
-                                                <span class="font-size-13 text-gray-23">- {{$reviews->created_at->format('d/m/yy')}}</span>
-                                            </div>
-                                            <!-- End Reviewer -->
-                                        </div>
-                                        @endforeach
-                                        @else
-                                        <p style="color:gray">There is no Review yet for this product, be the first to say a review</p>
-                                        @endif
-                                                <!-- End Ratings -->
-                                            </div>
-                                            <div class="col-md-6">
-                                                <h3 class="font-size-18 mb-5">Add a review</h3>
-                                                <!-- Form -->
-                                                 <form action="{{ route('review.store', [$product->id]) }}" method="POST">
-                                                 @csrf
-                                                    <div class="row align-items-center mb-4">
-                                                        <div class="col-md-4 col-lg-3">
-                                                            <label for="rating" class="form-label mb-0">Rate</label>
+                                            <div class="col-12">
+                                                <h3 class="sofar-pd-tabs__heading">Write a review</h3>
+                                                @if (session('review_status'))
+                                                    <div class="alert alert-success sofar-review-alert" role="status">{{ session('review_status') }}</div>
+                                                @endif
+                                                @if ($errors->hasAny(['name', 'email', 'rated', 'description', 'website']))
+                                                    <div class="alert alert-danger sofar-review-alert" role="alert">
+                                                        @foreach (['name', 'email', 'rated', 'description', 'website'] as $field)
+                                                            @error($field)<div>{{ $message }}</div>@enderror
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                                <form action="{{ route('review.store', [$product->id]) }}" method="POST" class="sofar-review-form">
+                                                    @csrf
+                                                    {{-- Honeypot: hidden from people; bots that fill it are rejected. --}}
+                                                    <div class="sofar-hp" aria-hidden="true">
+                                                        <label for="reviewWebsite">Website</label>
+                                                        <input type="text" name="website" id="reviewWebsite" tabindex="-1" autocomplete="off">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="rating">Your rating</label>
+                                                        <select name="rated" id="rating" class="form-control">
+                                                            <option value="5">★★★★★ Excellent</option>
+                                                            <option value="4">★★★★☆ Good</option>
+                                                            <option value="3">★★★☆☆ Average</option>
+                                                            <option value="2">★★☆☆☆ Poor</option>
+                                                            <option value="1">★☆☆☆☆ Terrible</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="descriptionTextarea">Your review</label>
+                                                        <textarea class="form-control" name="description" rows="4" id="descriptionTextarea" required>{{ old('description') }}</textarea>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="form-group col-sm-6">
+                                                            <label for="inputName">Name <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" name="name" id="inputName" value="{{ old('name') }}" required>
                                                         </div>
-                                                        <div class="col-md-8 col-lg-9">
-                                                             <select name="rated" id="rating" class="custom-select focus-shadow-0">
-                                                            <option value="5">★★★★★ (5/5)</option>
-                                                            <option value="4">★★★★☆ (4/5)</option>
-                                                            <option value="3">★★★☆☆ (3/5)</option>
-                                                            <option value="2">★★☆☆☆ (2/5)</option>
-                                                            <option value="1">★☆☆☆☆ (1/5)</option>
-                                                          </select>
+                                                        <div class="form-group col-sm-6">
+                                                            <label for="emailAddress">Email <span class="text-danger">*</span></label>
+                                                            <input type="email" class="form-control" name="email" id="emailAddress" value="{{ old('email') }}" required>
                                                         </div>
                                                     </div>
-                                                    <div class="js-form-message form-group mb-3 row">
-                                                        <div class="col-md-4 col-lg-3">
-                                                            <label for="descriptionTextarea" class="form-label">Your Review</label>
-                                                        </div>
-                                                        <div class="col-md-8 col-lg-9">
-                                                            <textarea class="form-control" name="description" rows="3" id="descriptionTextarea"
-                                                            data-msg="Please enter your message."
-                                                            data-error-class="u-has-error"
-                                                            data-success-class="u-has-success"></textarea>
-                                                        </div>
-                                                    </div>
-                                                    <div class="js-form-message form-group mb-3 row">
-                                                        <div class="col-md-4 col-lg-3">
-                                                            <label for="inputName"  class="form-label">Name <span class="text-danger">*</span></label>
-                                                        </div>
-                                                        <div class="col-md-8 col-lg-9">
-                                                            <input type="text" class="form-control" name="name" id="inputName" aria-label="" required
-                                                            data-msg="Please enter your name."
-                                                            data-error-class="u-has-error"
-                                                            data-success-class="u-has-success">
-                                                        </div>
-                                                    </div>
-                                                    <div class="js-form-message form-group mb-3 row">
-                                                        <div class="col-md-4 col-lg-3">
-                                                            <label for="emailAddress"  class="form-label">Email <span class="text-danger">*</span></label>
-                                                        </div>
-                                                        <div class="col-md-8 col-lg-9">
-                                                            <input type="email" class="form-control" name="email" id="emailAddress" aria-label="" required
-                                                            data-msg="Please enter a valid email address."
-                                                            data-error-class="u-has-error"
-                                                            data-success-class="u-has-success">
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="offset-md-4 offset-lg-3 col-auto">
-                                                            <button type="submit" class="btn btn-primary-dark btn-wide transition-3d-hover">Add Review</button>
-                                                        </div>
-                                                    </div>
+                                                    <button type="submit" class="sofar-pd-buy__cart">Submit review</button>
                                                 </form>
-                                                <!-- End Form -->
                                             </div>
                                         </div>
-                                    
-                                        <!-- End Review -->
-                                        <!-- Review -->
-                               
-                                        <!-- End Review -->
                                     </div>
                                 </div>
+                            </section>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="col-md-6">
+                            <div class="sofar-pd-info">
+                                @if ($product->category)
+                                    <a href="{{ route('user.category', $product->category) }}" class="sofar-pd-info__category">{{ $product->category->name }}</a>
+                                @endif
+                                <h1 class="sofar-pd-info__title">{{ $title }}</h1>
+
+                                <a href="#pdTabs" class="sofar-pd-info__rating js-open-reviews">
+                                    <span class="sofar-stars" aria-label="Rated {{ $averageRating }} out of 5">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <i class="{{ $i <= $roundedRating ? 'fas' : 'far' }} fa-star" aria-hidden="true"></i>
+                                        @endfor
+                                    </span>
+                                    <span>{{ $reviewCount > 0 ? number_format($averageRating, 1).' · '.number_format($reviewCount).' '.\Illuminate\Support\Str::plural('review', $reviewCount) : 'No reviews yet' }}</span>
+                                </a>
+
+                                <div class="sofar-pd-info__price">
+                                    <span class="sofar-pd-info__now">₦{{ number_format($price) }}</span>
+                                    @if ($discount > 0)
+                                        <del class="sofar-pd-info__was">₦{{ number_format($oldPrice) }}</del>
+                                        <span class="sofar-pd-info__save">Save {{ $discount }}%</span>
+                                    @endif
+                                </div>
+                                @if ((float) $product->exchange_rate > 0)
+                                    <p class="sofar-pd-info__usd">≈ {{ number_format((float) $product->exchange_rate) }} USD</p>
+                                @endif
+
+                                <p class="sofar-pd-info__stock"><i class="fa fa-check-circle" aria-hidden="true"></i> In stock</p>
+
+                                <div class="sofar-pd-buy">
+                                    <div class="sofar-pd-qty">
+                                        <label for="qty2" class="sr-only">Quantity</label>
+                                        <button type="button" class="sofar-pd-qty__btn decrement-btn" aria-label="Decrease quantity"><i class="fas fa-minus"></i></button>
+                                        <input class="sofar-pd-qty__input" name="qty" id="qty2" type="number" value="1" min="1" inputmode="numeric">
+                                        <button type="button" class="sofar-pd-qty__btn increment-btn" aria-label="Increase quantity"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                    <button type="button" class="sofar-pd-buy__cart" id="add2cart">
+                                        <i class="ec ec-add-to-cart" aria-hidden="true"></i> Add to Cart
+                                    </button>
+                                </div>
+                                <a href="{{ $whatsappUrl }}" class="sofar-pd-buy__whatsapp" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp" aria-hidden="true"></i> Order on WhatsApp
+                                </a>
+
+                                @if ($product->specification)
+                                    <a href="{{ asset('images/pdf/'.rawurlencode((string) $product->specification)) }}" class="sofar-pd-info__spec btn btn-outline-success" target="_blank" rel="noopener">
+                                        <i class="far fa-file-pdf" aria-hidden="true"></i> View {{$product?->category?->name}} specification (PDF)
+                                    </a>
+                                @endif
                             </div>
-                            <!-- End Tab Content -->
                         </div>
                     </div>
-                </div>
-                 <div class="mb-6">
-                    <div class="d-flex justify-content-between align-items-center border-bottom border-color-1 flex-lg-nowrap flex-wrap mb-4">
-                        <h3 class="section-title mb-0 pb-2 font-size-22">Recently Viewed</h3>
-                    </div>
-                    <div class="row sofar-product-grid">
-                        @foreach($recent as $recents)
-                        <div class="col-6 col-md-4 col-xl-3">
-                            @include('includes.product-card', ['product' => $recents])
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div class="mb-6">
-                    <div class="d-flex justify-content-between align-items-center border-bottom border-color-1 flex-lg-nowrap flex-wrap mb-4">
-                        <h3 class="section-title mb-0 pb-2 font-size-22">You May also Like</h3>
-                    </div>
-                    <div class="row sofar-product-grid">
-                        @foreach($related as $related_pro)
+                </section>
+            </div>
+        </div>
+        @if (count($related) > 0)
+            <section class="sofar-pd-section">
+                <h2 class="sofar-pd-section__title">You may also like</h2>
+                <div class="row sofar-product-grid">
+                    @foreach ($related as $related_pro)
                         <div class="col-6 col-md-4 col-xl-3">
                             @include('includes.product-card', ['product' => $related_pro])
                         </div>
-                        @endforeach
-                    </div>
+                    @endforeach
                 </div>
-            </div>
-        </main>
-      @endsection
+            </section>
+        @endif
+
+        @if (count($recent) > 0)
+            <section class="sofar-pd-section">
+                <h2 class="sofar-pd-section__title">Recently viewed</h2>
+                <div class="row sofar-product-grid">
+                    @foreach ($recent as $recents)
+                        <div class="col-6 col-md-4 col-xl-3">
+                            @include('includes.product-card', ['product' => $recents])
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+    </div>
+</main>
+@endsection
 
 @section('scripts')
 <script>
@@ -369,6 +233,17 @@
         var $addButton = $('#add2cart');
         var $overlay = $('#cartAddedOverlay');
         var $quantity = $('#qty2');
+
+        // Rating link under the title opens the Reviews tab.
+        $('.js-open-reviews').on('click', function () {
+            $('#pd-reviews-tab').tab('show');
+        });
+
+        @if (session('review_status') || $errors->hasAny(['name', 'email', 'rated', 'description', 'website']))
+            // Back from submitting a review: show the Reviews tab with the message.
+            $('#pd-reviews-tab').tab('show');
+            document.getElementById('pdTabs').scrollIntoView();
+        @endif
 
         $('.increment-btn').on('click', function (event) {
             event.preventDefault();

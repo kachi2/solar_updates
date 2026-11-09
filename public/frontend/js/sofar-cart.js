@@ -60,8 +60,8 @@
         });
     });
 
-    // Closing the pop-up (also works on pages without the product-page script).
-    $(document).on('click', '#cartAddedClose', function () {
+    // Closing the pop-up (× button or "Continue Shopping"); works on every page.
+    $(document).on('click', '#cartAddedClose, .js-cart-continue', function () {
         $('#cartAddedOverlay').prop('hidden', true).attr('aria-hidden', 'true');
     });
 
