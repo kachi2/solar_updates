@@ -1,3 +1,8 @@
+# Live server (cPanel): run this site on PHP 8.2. Ignored where the handler doesn't exist.
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-alt-php82
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
