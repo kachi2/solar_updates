@@ -42,11 +42,13 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureRateLimits(): void
     {
-        // Every page, per visitor IP: generous for shoppers, slows scrapers down.
-        RateLimiter::for('web', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.pages_per_minute'))->by($request->ip()));
+        // Every page, per visitor: generous for shoppers, slows scrapers down.
+        RateLimiter::for('web', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.pages_per_minute'))
+            ->by('web|'.$this->visitorKey($request)));
 
         // Product pages are what scrapers crawl most.
-        RateLimiter::for('product', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.product_pages_per_minute'))->by($request->ip()));
+        RateLimiter::for('product', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.product_pages_per_minute'))
+            ->by('product|'.$this->visitorKey($request)));
 
         // Login attempts per email + IP (customer and admin logins).
         RateLimiter::for('login', fn (Request $request) => Limit::perMinutes(
@@ -59,5 +61,20 @@ class AppServiceProvider extends ServiceProvider
             config('sofar.rate_limits.register.minutes'),
             config('sofar.rate_limits.register.attempts'),
         )->by($request->ip()));
+    }
+
+    /**
+     * Who a page/product limit counts against. Logged-in customers get their own
+     * allowance; guests are counted per IP + browser, because many customers can
+     * share one public IP (mobile networks, offices) but not one browser string.
+     * Scrapers usually send a single browser string, so they are still caught.
+     */
+    private function visitorKey(Request $request): string
+    {
+        if ($user = $request->user()) {
+            return 'user:'.$user->getAuthIdentifier();
+        }
+
+        return 'guest:'.$request->ip().'|'.sha1((string) $request->userAgent());
     }
 }

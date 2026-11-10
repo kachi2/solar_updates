@@ -73,6 +73,37 @@ class RateLimitTest extends TestCase
         $this->get('/pages/news')->assertStatus(429)->assertHeader('Retry-After');
     }
 
+    public function test_guests_sharing_an_ip_but_using_different_browsers_have_separate_limits(): void
+    {
+        config(['sofar.rate_limits.product_pages_per_minute' => 3]);
+        $product = $this->createProduct();
+        $sharedIp = ['REMOTE_ADDR' => '102.89.1.1'];
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->withServerVariables($sharedIp)->withHeader('User-Agent', 'iPhone Safari')->get(route('product-details', $product))->assertOk();
+        }
+        $this->withServerVariables($sharedIp)->withHeader('User-Agent', 'iPhone Safari')->get(route('product-details', $product))->assertStatus(429);
+
+        // Another phone on the same mobile network is not affected.
+        $this->withServerVariables($sharedIp)->withHeader('User-Agent', 'Samsung Internet')->get(route('product-details', $product))->assertOk();
+    }
+
+    public function test_logged_in_customers_have_their_own_limit(): void
+    {
+        config(['sofar.rate_limits.product_pages_per_minute' => 3]);
+        $product = $this->createProduct();
+        $sharedIp = ['REMOTE_ADDR' => '102.89.1.2'];
+
+        // A guest on the shared IP uses up the allowance…
+        for ($i = 0; $i < 4; $i++) {
+            $this->withServerVariables($sharedIp)->get(route('product-details', $product));
+        }
+
+        // …but a logged-in customer on the same IP and browser still gets in.
+        $this->actingAs($this->createCustomer())->withServerVariables($sharedIp)
+            ->get(route('product-details', $product))->assertOk();
+    }
+
     public function test_normal_shopping_is_not_blocked_by_default_limits(): void
     {
         $product = $this->createProduct();
