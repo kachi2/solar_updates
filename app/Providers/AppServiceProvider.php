@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\View\Composers\SharedViewDataComposer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The shop theme is Bootstrap 4; Laravel's default pagination markup is for Tailwind.
+        Paginator::useBootstrapFour();
+
         // errors.500 is left out on purpose: it must render even when the database is down.
         // Laravel renders HTTP error pages as "errors::404" (namespaced), so both names are listed.
         View::composer([

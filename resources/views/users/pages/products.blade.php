@@ -152,9 +152,7 @@
                         <!-- Shop Pagination -->
                         <nav class="d-md-flex justify-content-between align-items-center border-top pt-3" aria-label="Page navigation example">
                             <div class="text-center text-md-left mb-3 mb-md-0"></div>
-                            <ul class="pagination mb-0 pagination-shop justify-content-center justify-content-md-start">
-                            {{$products->links()}}
-                            </ul>
+                            <div class="sofar-shop-pagination">{{ $products->links() }}</div>
                         </nav>
                         <!-- End Shop Pagination -->
                     </div>
