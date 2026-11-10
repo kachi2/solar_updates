@@ -1,5 +1,6 @@
 @extends('layouts.app')
-@section('title', 'Projects · ')
+@section('title', 'Solar installation projects')
+@section('description', 'See solar inverter, battery and panel installations completed by Sofar Solar for homes and businesses across Nigeria.')
 @section('content')
 <main id="content" role="main" class="sofar-cart sofar-projects">
     <div class="container">

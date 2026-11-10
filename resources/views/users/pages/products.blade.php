@@ -1,4 +1,14 @@
 @extends('layouts.app')
+@if (isset($currentCategory))
+    @section('title', $currentCategory->name)
+    @section('description', 'Shop '.$currentCategory->name.' at Sofar Solar Nigeria. Genuine products, great prices, and delivery across Nigeria. Order online.')
+    @section('image', (string) $currentCategory->image_url)
+@elseif (isset($search))
+    @section('title', 'Search results for “'.$search.'”')
+@else
+    @section('title', 'Shop all products')
+    @section('description', 'Shop all Sofar solar inverters, lithium batteries, solar panels and accessories. Genuine products with delivery across Nigeria.')
+@endif
 @section('content')
         <!-- ========== END HEADER ========== -->
           <main id="content" role="main">

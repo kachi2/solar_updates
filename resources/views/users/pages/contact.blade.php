@@ -1,4 +1,6 @@
 @extends('layouts.app')
+@section('title', 'Contact us')
+@section('description', 'Contact Sofar Solar Nigeria. Call '.collect(config('sofar.contact.phones'))->pluck('display')->join(' or ').', email '.config('sofar.contact.email').', or visit us at '.config('sofar.contact.address').'.')
 @section('content')
 <main id="content" role="main">
     <!-- breadcrumb -->

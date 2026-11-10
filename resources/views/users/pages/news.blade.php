@@ -1,5 +1,6 @@
 @extends('layouts.app')
-@section('title', 'News · ')
+@section('title', 'News & updates')
+@section('description', 'News, product launches and solar energy tips from Sofar Solar Nigeria.')
 @section('content')
 @php
     $excerpt = fn ($post, $limit) => \Illuminate\Support\Str::limit(trim(html_entity_decode(strip_tags((string) $post->content))), $limit);

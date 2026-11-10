@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('title', 'Recently viewed')
 @section('content')
 <main id="content" role="main" class="checkout-page">
             <!-- breadcrumb -->

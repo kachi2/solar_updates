@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('title', 'Reset your password')
 
 @section('content')
 <div class="container">

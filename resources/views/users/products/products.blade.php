@@ -1,6 +1,42 @@
 @extends('layouts.app')
 @use('App\Support\Media')
-@section('title', $title)
+@section('title', $product->name)
+@section('description', $product->name.((float) $product->sale_price > 0 ? ' for ₦'.number_format((float) $product->sale_price) : '').' at Sofar Solar Nigeria. '.((string) $product->description ?: 'Order online or on WhatsApp with delivery across Nigeria.'))
+@section('image', (string) $product->image_url)
+@section('og_type', 'product')
+@push('head')
+@php
+    // Google product data (rich results: price, stock, star rating).
+    $productSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'image' => array_values(array_filter([$product->image_url])),
+        'description' => \Illuminate\Support\Str::limit(trim(preg_replace('/[\s\x{00A0}]+/u', ' ', html_entity_decode(preg_replace('/<[^>]*>/', ' ', (string) $product->description), ENT_QUOTES | ENT_HTML5))), 500),
+        'sku' => (string) $product->id,
+        'url' => route('product-details', $product),
+    ];
+    if ((float) $product->sale_price > 0) {
+        $productSchema['offers'] = [
+            '@type' => 'Offer',
+            'url' => route('product-details', $product),
+            'priceCurrency' => 'NGN',
+            'price' => number_format((float) $product->sale_price, 2, '.', ''),
+            'availability' => 'https://schema.org/InStock',
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'seller' => ['@type' => 'Organization', 'name' => 'Sofar Solar'],
+        ];
+    }
+    if ($reviewCount > 0) {
+        $productSchema['aggregateRating'] = [
+            '@type' => 'AggregateRating',
+            'ratingValue' => round((float) $averageRating, 1),
+            'reviewCount' => $reviewCount,
+        ];
+    }
+@endphp
+<script type="application/ld+json">{!! json_encode($productSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
+@endpush
 @section('content')
 @php
     // Main image first, then gallery images (no duplicates / empties).

@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @use('App\Support\Media')
-@section('title', $project->title.' · ')
+@section('title', $project->title)
+@section('description', (string) $project->content ?: $project->title.' — a solar installation by Sofar Solar Nigeria.')
+@section('image', (string) $project->image_url)
+@section('og_type', 'article')
 @section('content')
 @php
     $photos = collect(json_decode((string) $project->images, true) ?: [])

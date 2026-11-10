@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @use('App\Support\Media')
-@section('title', $news->title.' · ')
+@section('title', $news->title)
+@section('description', (string) $news->content ?: $news->title.' — news from Sofar Solar Nigeria.')
+@section('image', (string) $news->image_url)
+@section('og_type', 'article')
 @section('content')
 @php
     $imageUrl = fn ($file) => Media::url(Media::NEWS, $file);

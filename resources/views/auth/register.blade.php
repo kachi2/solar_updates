@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('title', 'Create an account')
 
 @section('content')
 <main id="content" role="main">
