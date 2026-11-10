@@ -189,8 +189,11 @@
                                 </a>
 
                                 @if ($product->specification)
-                                    <a href="{{ asset('images/pdf/'.rawurlencode((string) $product->specification)) }}" class="sofar-pd-info__spec btn btn-outline-success" target="_blank" rel="noopener">
-                                        <i class="far fa-file-pdf" aria-hidden="true"></i> View {{$product?->category?->name}} specification (PDF)
+                                    {{-- Downloads the datasheet; the file name shown to the customer is the product name. --}}
+                                    <a href="{{ Media::url(Media::SPECIFICATIONS, $product->specification) }}"
+                                       class="sofar-pd-info__spec btn btn-outline-success"
+                                       download="{{ \Illuminate\Support\Str::slug($product->name) }}-specification.pdf">
+                                        <i class="fas fa-file-download" aria-hidden="true"></i> Download specification (PDF)
                                     </a>
                                 @endif
                             </div>

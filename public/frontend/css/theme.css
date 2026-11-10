@@ -38773,6 +38773,40 @@ blockquote:not(.blockquote) p {
   height: auto;
 }
 
+/* Admin-pasted descriptions: keep text inside the box and the site's type. */
+.sofar-pd-description {
+  overflow-wrap: anywhere;
+}
+
+.sofar-pd-description * {
+  max-width: 100%;
+  white-space: normal !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+}
+
+.sofar-pd-description ul,
+.sofar-pd-description ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+/* Pasted lists often wrap the real list in an empty bullet: hide that outer dot. */
+.sofar-pd-description li:has(> ul:first-child),
+.sofar-pd-description li:has(> ol:first-child) {
+  list-style: none;
+}
+
+.sofar-pd-description li > ul,
+.sofar-pd-description li > ol {
+  margin-bottom: 0;
+  padding-left: 0;
+}
+
+.sofar-pd-description li {
+  margin-bottom: 0.375rem;
+}
+
 .sofar-pd-spec {
   display: block;
   width: 100%;
