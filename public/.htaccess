@@ -1,20 +1,9 @@
-# Live server (cPanel): run this site on PHP 8.2. Ignored where the handler doesn't exist.
-<FilesMatch "\.php$">
-    SetHandler application/x-httpd-alt-php82
-</FilesMatch>
-
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
     RewriteEngine On
-
-    # Block old-site links with encrypted IDs (/products/details/eyJ..., /projects/details/...,
-    # /news/details/..., /category/eyJ...). Bots replay them from many IPs; Apache refuses
-    # them here (403) so no PHP, database or cache work happens.
-    RewriteRule ^(products|projects|news)/details/ - [F,L]
-    RewriteRule ^category/eyJ - [F,L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
