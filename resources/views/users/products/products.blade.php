@@ -47,9 +47,12 @@
         ->values();
     $price = (float) $product->sale_price;
     $oldPrice = (float) $product->price;
-    $discount = $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
+    $hasPrice = $product->hasPrice();
+    $discount = $hasPrice && $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
     $roundedRating = (int) round($averageRating);
-    $whatsappText = "Hello Sofar Solar, I'd like to order:\n".$product->name."\nPrice: ₦".number_format($price);
+    $whatsappText = $hasPrice
+        ? "Hello Sofar Solar, I'd like to order:\n".$product->name."\nPrice: ₦".number_format($price)
+        : "Hello Sofar Solar, I'd like the price of:\n".$product->name."\n".route('product-details', $product);
     $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='.rawurlencode($whatsappText);
 @endphp
 <main id="content" role="main" class="sofar-pd">
@@ -196,32 +199,37 @@
                                     <span>{{ $reviewCount > 0 ? number_format($averageRating, 1).' · '.number_format($reviewCount).' '.\Illuminate\Support\Str::plural('review', $reviewCount) : 'No reviews yet' }}</span>
                                 </a>
 
-                                <div class="sofar-pd-info__price">
-                                    <span class="sofar-pd-info__now">₦{{ number_format($price) }}</span>
-                                    @if ($discount > 0)
-                                        <del class="sofar-pd-info__was">₦{{ number_format($oldPrice) }}</del>
-                                        <span class="sofar-pd-info__save">Save {{ $discount }}%</span>
-                                    @endif
-                                </div>
-                                @if ((float) $product->exchange_rate > 0)
-                                    <p class="sofar-pd-info__usd">≈ {{ number_format((float) $product->exchange_rate) }} USD</p>
-                                @endif
-
-                                <p class="sofar-pd-info__stock"><i class="fa fa-check-circle" aria-hidden="true"></i> In stock</p>
-
-                                <div class="sofar-pd-buy">
-                                    <div class="sofar-pd-qty">
-                                        <label for="qty2" class="sr-only">Quantity</label>
-                                        <button type="button" class="sofar-pd-qty__btn decrement-btn" aria-label="Decrease quantity"><i class="fas fa-minus"></i></button>
-                                        <input class="sofar-pd-qty__input" name="qty" id="qty2" type="number" value="1" min="1" inputmode="numeric">
-                                        <button type="button" class="sofar-pd-qty__btn increment-btn" aria-label="Increase quantity"><i class="fas fa-plus"></i></button>
+                                @if ($hasPrice)
+                                    <div class="sofar-pd-info__price">
+                                        <span class="sofar-pd-info__now">₦{{ number_format($price) }}</span>
+                                        @if ($discount > 0)
+                                            <del class="sofar-pd-info__was">₦{{ number_format($oldPrice) }}</del>
+                                            <span class="sofar-pd-info__save">Save {{ $discount }}%</span>
+                                        @endif
                                     </div>
-                                    <button type="button" class="sofar-pd-buy__cart" id="add2cart">
-                                        <i class="ec ec-add-to-cart" aria-hidden="true"></i> Add to Cart
-                                    </button>
-                                </div>
+                                    @if ((float) $product->exchange_rate > 0)
+                                        <p class="sofar-pd-info__usd">≈ {{ number_format((float) $product->exchange_rate) }} USD</p>
+                                    @endif
+
+                                    <p class="sofar-pd-info__stock"><i class="fa fa-check-circle" aria-hidden="true"></i> In stock</p>
+
+                                    <div class="sofar-pd-buy">
+                                        <div class="sofar-pd-qty">
+                                            <label for="qty2" class="sr-only">Quantity</label>
+                                            <button type="button" class="sofar-pd-qty__btn decrement-btn" aria-label="Decrease quantity"><i class="fas fa-minus"></i></button>
+                                            <input class="sofar-pd-qty__input" name="qty" id="qty2" type="number" value="1" min="1" inputmode="numeric">
+                                            <button type="button" class="sofar-pd-qty__btn increment-btn" aria-label="Increase quantity"><i class="fas fa-plus"></i></button>
+                                        </div>
+                                        <button type="button" class="sofar-pd-buy__cart" id="add2cart">
+                                            <i class="ec ec-add-to-cart" aria-hidden="true"></i> Add to Cart
+                                        </button>
+                                    </div>
+                                @else
+                                    {{-- No price yet: orders go through WhatsApp only. --}}
+                                    <p class="sofar-pd-info__note">Chat with us on WhatsApp for the current price, availability and delivery.</p>
+                                @endif
                                 <a href="{{ $whatsappUrl }}" class="sofar-pd-buy__whatsapp" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp" aria-hidden="true"></i> Order on WhatsApp
+                                    <i class="fab fa-whatsapp" aria-hidden="true"></i> {{ $hasPrice ? 'Order on WhatsApp' : 'Ask for price on WhatsApp' }}
                                 </a>
 
                                 @if ($product->specification)

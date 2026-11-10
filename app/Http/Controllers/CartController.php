@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Visibility;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -25,6 +26,10 @@ class CartController extends Controller
     public function add(Request $request, string $id): JsonResponse
     {
         $product = $this->products->findOrFail($id);
+
+        // Hidden products and products without a price (WhatsApp-only) can't be bought online.
+        abort_if($product->visibility() === Visibility::Hidden, 404);
+        abort_unless($product->hasPrice(), 422, 'This product has no price yet. Please ask for the price on WhatsApp.');
 
         $validated = $request->validate([
             'qty' => ['required', 'integer', 'min:1'],

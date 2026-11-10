@@ -42,7 +42,10 @@
                                             <td>{{$sp->id}}</td>
                                                 <td>
                                                     <a href="#">{{$sp->name}}</a>
-                                                </td> 
+                                                    @if (! $sp->is_active)
+                                                        <span class="badge badge-danger">Inactive</span>
+                                                    @endif
+                                                </td>
                                                
                                                 <td>
                                                     @foreach ($sp->subCategories as $item)
@@ -69,7 +72,15 @@
                                                         <div class="dropdown-menu dropdown-menu-right">
                                                             <a href="{{route('category.edit', encrypt($sp->id))}}" class="dropdown-item">Edit Cateogry</a>
                                                             <a href="{{route('edit.subcat', encrypt($sp->id))}}" class="dropdown-item">Edit Sub Cateogry</a>
-                                                            <a href="{{route('create.subcat', encrypt($sp->id))}}" class="dropdown-item">Add Sub Category</a>  
+                                                            <a href="{{route('create.subcat', encrypt($sp->id))}}" class="dropdown-item">Add Sub Category</a>
+                                                            {{-- Inactive categories and their products are hidden from the shop. --}}
+                                                            <form method="post" action="{{ route('category.status', encrypt($sp->id)) }}">
+                                                                @csrf
+                                                                <input type="hidden" name="is_active" value="{{ $sp->is_active ? 0 : 1 }}">
+                                                                <button type="submit" @class(['dropdown-item', 'text-danger' => $sp->is_active, 'text-success' => ! $sp->is_active])>
+                                                                    {{ $sp->is_active ? 'Deactivate' : 'Activate' }}
+                                                                </button>
+                                                            </form>
                                                         </div>
                                                     </div>
                                                 </td>

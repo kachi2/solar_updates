@@ -9,6 +9,9 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Product queries. Every shop-facing list skips products disabled in the admin (status = 1).
+ */
 class ProductRepository
 {
     public function findOrFail(int|string $id): Product
@@ -18,12 +21,12 @@ class ProductRepository
 
     public function latestPaginated(int $perPage): Paginator
     {
-        return Product::latest()->simplePaginate($perPage);
+        return Product::visible()->latest()->simplePaginate($perPage);
     }
 
     public function latestLengthAware(int $perPage): LengthAwarePaginator
     {
-        return Product::latest()->paginate($perPage);
+        return Product::visible()->latest()->paginate($perPage);
     }
 
     /**
@@ -31,7 +34,7 @@ class ProductRepository
      */
     public function latest(int $limit): Collection
     {
-        return Product::latest()->take($limit)->get();
+        return Product::visible()->latest()->take($limit)->get();
     }
 
     /**
@@ -39,17 +42,17 @@ class ProductRepository
      */
     public function cheapest(int $limit): Collection
     {
-        return Product::orderBy('sale_price')->take($limit)->get();
+        return Product::visible()->orderBy('sale_price')->take($limit)->get();
     }
 
     public function inCategory(Category $category, int $perPage): Paginator
     {
-        return Product::where('category_id', $category->id)->simplePaginate($perPage);
+        return Product::visible()->where('category_id', $category->id)->simplePaginate($perPage);
     }
 
     public function search(string $term, int $perPage): Paginator
     {
-        return Product::where('name', 'like', '%'.$term.'%')->simplePaginate($perPage)->withQueryString();
+        return Product::visible()->where('name', 'like', '%'.$term.'%')->simplePaginate($perPage)->withQueryString();
     }
 
     /**
@@ -59,7 +62,7 @@ class ProductRepository
      */
     public function related(Product $product, int $limit): Collection
     {
-        return Product::where('category_id', $product->category_id)->whereKeyNot($product->id)->take($limit)->get();
+        return Product::visible()->where('category_id', $product->category_id)->whereKeyNot($product->id)->take($limit)->get();
     }
 
     /**
@@ -70,7 +73,7 @@ class ProductRepository
      */
     public function findMany(array $ids, int $limit): Collection
     {
-        return Product::whereIn('id', $ids)->latest()->take($limit)->get();
+        return Product::visible()->whereIn('id', $ids)->latest()->take($limit)->get();
     }
 
     /**

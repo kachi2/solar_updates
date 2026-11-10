@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Visibility;
 use App\Exceptions\UserFacingException;
 use App\Http\Requests\AccountDetailsRequest;
 use App\Http\Requests\AddressRequest;
@@ -52,6 +53,9 @@ class HomeController extends Controller
 
     public function productDetails(Product $product, ReviewRepository $reviews): View
     {
+        // Products disabled in the admin are not public.
+        abort_if($product->visibility() === Visibility::Hidden, 404);
+
         $this->recentlyViewed->remember($product);
         $this->products->recordView($product);
 

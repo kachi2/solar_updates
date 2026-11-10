@@ -57,11 +57,11 @@ class ProductController extends Controller
                 'category_id' => $request->input('category_id'),
                 'sub_category_id' => 1,
                 'description' => $request->input('description'),
-                'price' => $request->input('price'),
-                'sale_price' => $request->input('sale_price'),
+                'price' => $request->integer('price'),
+                'sale_price' => $request->integer('sale_price'),
                 'admin_id' => $request->user('admin')->id,
-                'exchange_rate' => $this->exchangeRate($request->input('sale_price')),
-                'percentage' => ($request->input('price') - $request->input('sale_price')) / $request->input('price') * 100,
+                'exchange_rate' => $this->exchangeRate($request->integer('sale_price')),
+                'percentage' => $this->discountPercentage($request->integer('price'), $request->integer('sale_price')),
             ]);
 
             $this->attachUploads($product, $request);
@@ -100,9 +100,10 @@ class ProductController extends Controller
         ], fn ($value) => $value !== null));
 
         $product->fill([
-            'price' => $request->input('price'),
-            'sale_price' => $request->input('sale_price'),
-            'exchange_rate' => $this->exchangeRate($request->input('sale_price')),
+            'price' => $request->integer('price'),
+            'sale_price' => $request->integer('sale_price'),
+            'exchange_rate' => $this->exchangeRate($request->integer('sale_price')),
+            'percentage' => $this->discountPercentage($request->integer('price'), $request->integer('sale_price')),
         ]);
 
         $this->attachUploads($product, $request);
@@ -111,19 +112,22 @@ class ProductController extends Controller
         return back()->with('alert', 'success')->with('message', 'Product Updated Successfully');
     }
 
+    /**
+     * Activate / deactivate a product (inactive products are hidden from the shop).
+     */
     public function status(Request $request, string $id): RedirectResponse
     {
-        $status = $request->integer('status', -1);
+        $request->validate(['is_active' => ['required', 'boolean']]);
+        $active = $request->boolean('is_active');
 
-        if (! in_array($status, [0, 1], true)) {
-            return back()->with('alert', 'error')->with('message', 'An errror occured, No changes made');
-        }
+        Product::whereKey($this->decryptId($id))->update([
+            'is_active' => $active,
+            'status' => $active ? 0 : 1, // legacy column, kept in step
+        ]);
 
-        Product::whereKey($this->decryptId($id))->update(['status' => $status]);
-
-        return $status === 1
-            ? back()->with('alert', 'error')->with('message', 'Product Disabled successfully')
-            : back()->with('alert', 'success')->with('message', 'Product Enabled successfully');
+        return $active
+            ? back()->with('alert', 'success')->with('message', 'Product activated')
+            : back()->with('alert', 'error')->with('message', 'Product deactivated, it is now hidden from the shop');
     }
 
     public function variation(string $id): View
@@ -156,6 +160,14 @@ class ProductController extends Controller
         $rate = (float) CurrencyExchange::firstOrFail()->rate;
 
         return $rate > 0 ? (float) $salePrice / $rate : 0;
+    }
+
+    /**
+     * Discount from price to sale price, in percent (0 when there is no price).
+     */
+    private function discountPercentage(int $price, int $salePrice): float
+    {
+        return $price > 0 ? ($price - $salePrice) / $price * 100 : 0;
     }
 
     private function attachUploads(Product $product, ProductRequest $request): void

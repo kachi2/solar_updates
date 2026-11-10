@@ -36,26 +36,39 @@ class Product extends Model
         'sub_category_id',
         'specification',
         'exchange_rate',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'deleted_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 
     /**
-     * Products not disabled in the admin (see Visibility).
+     * Products shown in the shop: active, and not in a deactivated category.
      */
     public function scopeVisible(Builder $query): Builder
     {
-        return $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', Visibility::Hidden->value));
+        return $query->where('is_active', true)
+            ->whereNotIn('category_id', Category::query()->where('is_active', false)->select('id'));
     }
 
     public function visibility(): Visibility
     {
-        return Visibility::fromLegacy($this->status);
+        return $this->is_active === false || $this->category?->is_active === false
+            ? Visibility::Hidden
+            : Visibility::Visible;
+    }
+
+    /**
+     * No price set: the shop shows "Learn more" and WhatsApp instead of the cart buttons.
+     */
+    public function hasPrice(): bool
+    {
+        return (float) $this->sale_price > 0;
     }
 
     public function subCategory(): BelongsTo

@@ -48,10 +48,17 @@
                                                 </td> 
                                                 <td>
                                                     <a href="#">{{$sp->name}}</a>
+                                                    @if (! $sp->is_active)
+                                                        <span class="badge badge-danger">Inactive</span>
+                                                    @endif
                                                 </td>
                                                  <td>
-                                                    <a href="#">{{number_format($sp->sale_price,2)}}</a>
-                                                </td> 
+                                                    @if ($sp->hasPrice())
+                                                        <a href="#">{{number_format($sp->sale_price,2)}}</a>
+                                                    @else
+                                                        <span class="badge badge-warning">No price · Learn more</span>
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     <a href="#">{{number_format($sp->exchange_rate,2)}}</a>
                                                 </td> 
@@ -78,19 +85,13 @@
                                                         <div class="dropdown-menu dropdown-menu-right">
                                                            
                                                                  <a href="{{route('product.edit', encrypt($sp->id))}}" class="dropdown-item">Edit Product</a>
-                                                            @if($sp->status != 1) 
-                                                            <form method="post" action="{{route('product.status', encrypt($sp->id))}}" id="form1"> 
-                                                            @csrf    
-                                                             <input type="hidden" name="status" value="1">
-                                                              <button type="submit"  class="dropdown-item" style="color:red">Disable</button>
-                                                             </form>
-                                                       @else
-                                                        <form method="post" action="{{route('product.status', encrypt($sp->id))}}" id="form2"> 
-                                                              @csrf  
-                                                              <input type="hidden" name="status" value="0">
-                                                              <button type="submit"  class="dropdown-item" style="color:green">Enable</button>
-                                                                 </form>
-                                                       @endif
+                                                            <form method="post" action="{{ route('product.status', encrypt($sp->id)) }}">
+                                                                @csrf
+                                                                <input type="hidden" name="is_active" value="{{ $sp->is_active ? 0 : 1 }}">
+                                                                <button type="submit" @class(['dropdown-item', 'text-danger' => $sp->is_active, 'text-success' => ! $sp->is_active])>
+                                                                    {{ $sp->is_active ? 'Deactivate' : 'Activate' }}
+                                                                </button>
+                                                            </form>
                                                        
                                                         </div>
                                                     </div>

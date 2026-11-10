@@ -81,7 +81,8 @@ class ProductManagementTest extends TestCase
             ->from(route('product.create'))
             ->post(route('product.store'), ['name' => ''])
             ->assertRedirect(route('product.create'))
-            ->assertSessionHasErrors(['name', 'price', 'image'])
+            ->assertSessionHasErrors(['name', 'image'])
+            ->assertSessionDoesntHaveErrors(['price']) // empty price = "Price on request"
             ->assertSessionHas('alert', 'error');
     }
 
@@ -122,14 +123,42 @@ class ProductManagementTest extends TestCase
         $this->assertSame('["g1.jpg"]', $product->gallery);
     }
 
-    public function test_admin_can_disable_a_product(): void
+    public function test_admin_can_clear_the_price_for_price_on_request(): void
     {
         $product = $this->createProduct();
 
         $this->actingAs($this->createAdmin(), 'admin')
-            ->post(route('product.status', encrypt($product->id)), ['status' => 1]);
+            ->put(route('product.update', encrypt($product->id)), ['price' => '', 'sale_price' => ''])
+            ->assertSessionHas('alert', 'success');
 
-        $this->assertEquals(1, $product->fresh()->status);
+        $product->refresh();
+        $this->assertFalse($product->hasPrice());
+        $this->assertEquals(0, $product->percentage);
+    }
+
+    public function test_admin_can_deactivate_and_activate_a_product(): void
+    {
+        $product = $this->createProduct();
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('product.status', encrypt($product->id)), ['is_active' => 0]);
+        $this->assertFalse($product->fresh()->is_active);
+        $this->assertEquals(1, $product->fresh()->status); // legacy column kept in step
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('product.status', encrypt($product->id)), ['is_active' => 1]);
+        $this->assertTrue($product->fresh()->is_active);
+    }
+
+    public function test_admin_can_deactivate_a_category(): void
+    {
+        $category = $this->createProduct()->category;
+
+        $this->actingAs($this->createAdmin(), 'admin')
+            ->post(route('category.status', encrypt($category->id)), ['is_active' => 0]);
+
+        $this->assertFalse($category->fresh()->is_active);
     }
 
     public function test_public_cannot_create_products(): void

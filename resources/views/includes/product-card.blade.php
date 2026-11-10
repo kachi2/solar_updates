@@ -9,10 +9,11 @@
     $detailsUrl = route('product-details', $product);
     $price = (float) $product->sale_price;
     $oldPrice = (float) $product->price;
-    $discount = $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
-    $whatsappText = "Hello Sofar Solar, I'd like to order:\n"
-        .$product->name."\n"
-        .'Price: ₦'.number_format($price);
+    $hasPrice = $product->hasPrice();
+    $discount = $hasPrice && $oldPrice > $price && $oldPrice > 0 ? (int) round(($oldPrice - $price) / $oldPrice * 100) : 0;
+    $whatsappText = $hasPrice
+        ? "Hello Sofar Solar, I'd like to order:\n".$product->name."\nPrice: ₦".number_format($price)
+        : "Hello Sofar Solar, I'd like the price of:\n".$product->name."\n".$detailsUrl;
     $whatsappUrl = 'https://wa.me/'.config('services.whatsapp.number').'?text='.rawurlencode($whatsappText);
 @endphp
 <article class="sofar-product-card">
@@ -32,18 +33,25 @@
             <a href="{{ $detailsUrl }}">{{ $product->name }}</a>
         </h3>
 
-        <div class="sofar-product-card__price">
-            <span class="sofar-product-card__now">₦{{ number_format($price) }}</span>
-            @if ($discount > 0)
-                <del class="sofar-product-card__was">₦{{ number_format($oldPrice) }}</del>
-            @endif
-        </div>
-        @if ((float) $product->exchange_rate > 0)
+        @if ($hasPrice)
+            <div class="sofar-product-card__price">
+                <span class="sofar-product-card__now">₦{{ number_format($price) }}</span>
+                @if ($discount > 0)
+                    <del class="sofar-product-card__was">₦{{ number_format($oldPrice) }}</del>
+                @endif
+            </div>
+        @endif
+        @if ($hasPrice && (float) $product->exchange_rate > 0)
             <span class="sofar-product-card__usd">≈ {{ number_format((float) $product->exchange_rate) }} USD</span>
         @endif
 
         <div class="sofar-product-card__actions">
-            @if ($quickAdd)
+            @if (! $hasPrice)
+                {{-- No price yet: it can't go in the cart, so the button opens the product page. --}}
+                <a href="{{ $detailsUrl }}" class="sofar-product-card__btn sofar-product-card__btn--cart">
+                    Learn more <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            @elseif ($quickAdd)
                 <button type="button" class="sofar-product-card__btn sofar-product-card__btn--cart js-quick-add" data-url="{{ route('carts.add', ['id' => $product->id]) }}">
                     Add to Cart <i class="ec ec-add-to-cart" aria-hidden="true"></i>
                 </button>

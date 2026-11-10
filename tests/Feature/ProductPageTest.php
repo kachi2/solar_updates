@@ -194,4 +194,46 @@ class ProductPageTest extends TestCase
         $first->update(['name' => 'Solar Street Light 40w (new)']);
         $this->assertSame('solar-street-light-40w', $first->fresh()->slug);
     }
+
+    public function test_inactive_products_are_hidden_from_the_shop(): void
+    {
+        $hidden = $this->createProduct(['name' => 'Retired Inverter X1', 'is_active' => false]);
+
+        $this->get('/pages/products')->assertOk()->assertDontSee('Retired Inverter X1');
+        $this->get(route('user.category', $hidden->category))->assertOk()->assertDontSee('Retired Inverter X1');
+        $this->get('/page/search?search=Retired')->assertOk()->assertDontSee('Retired Inverter X1');
+        $this->get(route('product-details', $hidden))->assertNotFound();
+        $this->getJson(route('carts.add', ['id' => $hidden->id, 'qty' => 1]))->assertNotFound();
+    }
+
+    public function test_inactive_categories_hide_their_page_menus_and_products(): void
+    {
+        $product = $this->createProduct(['name' => 'Street Light 60w']);
+        $product->category->update(['name' => 'Street Lights', 'is_active' => false]);
+
+        $this->get(route('user.category', $product->category))->assertNotFound();
+        $this->get(route('product-details', $product))->assertNotFound();
+        $this->get('/pages/products')->assertOk()->assertDontSee('Street Light 60w')->assertDontSee('Street Lights');
+    }
+
+    public function test_products_without_a_price_offer_learn_more_and_whatsapp_only(): void
+    {
+        $product = $this->createProduct(['name' => 'SF-16KWH-L1 Battery', 'price' => 0, 'sale_price' => 0]);
+
+        // Listing: "Learn more" to the product page instead of "Add to Cart".
+        $this->get('/pages/products')->assertOk()
+            ->assertSee('SF-16KWH-L1 Battery')
+            ->assertDontSee('sofar-product-card__now', false) // no price shown
+            ->assertSee('Learn more')
+            ->assertDontSee('js-quick-add', false);
+
+        // Product page: WhatsApp button only, no quantity or cart button.
+        $this->get(route('product-details', $product))->assertOk()
+            ->assertSee('Ask for price on WhatsApp')
+            ->assertDontSee('id="add2cart"', false)
+            ->assertDontSee('id="qty2"', false);
+
+        // And it can't be added to the cart directly.
+        $this->getJson(route('carts.add', ['id' => $product->id, 'qty' => 1]))->assertStatus(422);
+    }
 }

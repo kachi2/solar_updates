@@ -14,17 +14,19 @@ class CategoryRepository
 
     public function findBySlugOrFail(string $slug): Category
     {
-        return Category::where('slug', $slug)->firstOrFail();
+        return Category::active()->where('slug', $slug)->firstOrFail();
     }
 
     /**
-     * Categories with a `products_count` (menus, sidebars, footer).
+     * Active categories with a `products_count` of shop-visible products (menus, sidebars, footer).
      *
      * @return Collection<int, Category>
      */
     public function allWithProductCounts(): Collection
     {
-        return Category::withCount('products')->get();
+        return Category::active()
+            ->withCount(['products' => fn ($query) => $query->visible()])
+            ->get();
     }
 
     /**
@@ -32,6 +34,6 @@ class CategoryRepository
      */
     public function featured(int $limit): Collection
     {
-        return Category::take($limit)->get();
+        return Category::active()->take($limit)->get();
     }
 }

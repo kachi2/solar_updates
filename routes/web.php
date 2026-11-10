@@ -33,6 +33,7 @@ Route::prefix('admin')->group(function () {
 
         // Catalogue
         Route::resource('category', CategoryController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::post('/category/status/{category}', [CategoryController::class, 'status'])->name('category.status');
         Route::get('/subcategory/index/{id}', [SubcategoryController::class, 'index'])->name('index.subcat');
         Route::get('/subcategory/create/{id}', [SubcategoryController::class, 'create'])->name('create.subcat');
         Route::post('/subcategory/store/{id}', [SubcategoryController::class, 'store'])->name('store.subcat');

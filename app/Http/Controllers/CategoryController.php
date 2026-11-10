@@ -6,6 +6,7 @@ use App\Http\Requests\Admin\CategoryRequest;
 use App\Models\Category;
 use App\Services\ImageUploadService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -19,6 +20,21 @@ class CategoryController extends Controller
             'bheading' => 'Category',
             'breadcrumb' => 'Index',
         ]);
+    }
+
+    /**
+     * Activate / deactivate a category. While inactive, the category and its products are hidden from the shop.
+     */
+    public function status(Request $request, string $category): RedirectResponse
+    {
+        $request->validate(['is_active' => ['required', 'boolean']]);
+        $active = $request->boolean('is_active');
+
+        Category::whereKey($this->decryptId($category))->update(['is_active' => $active]);
+
+        return $active
+            ? back()->with('alert', 'success')->with('message', 'Category activated')
+            : back()->with('alert', 'error')->with('message', 'Category deactivated, it and its products are now hidden from the shop');
     }
 
     public function create(): View
