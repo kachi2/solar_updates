@@ -107,7 +107,7 @@ Route::prefix('admin')->group(function () {
 
 Route::get('/', [HomeController::class, 'index'])->name('index');
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-Route::get('/product/{product:slug}', [HomeController::class, 'productDetails'])->middleware('throttle:product')->name('product-details');
+Route::get('/product/{product:slug}', [HomeController::class, 'productDetails'])->name('product-details');
 // Old encrypted-id links (already shared/bookmarked) redirect permanently to the slug URL.
 Route::get('/products/details/{id}', [HomeController::class, 'legacyProductDetails'])->name('product-details.legacy');
 // /category/{slug}; old encrypted-id links on the same path redirect to the slug (see HomeController::category).

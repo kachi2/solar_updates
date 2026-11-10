@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\BlockedVisitor;
 use App\View\Composers\SharedViewDataComposer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -46,13 +47,25 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureRateLimits(): void
     {
-        // Every page, per visitor: generous for shoppers, slows scrapers down.
-        RateLimiter::for('web', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.pages_per_minute'))
-            ->by('web|'.$this->visitorKey($request)));
+        // Page views per visitor (config sofar.rate_limits.pages). Not counted: the admin
+        // area, background (AJAX) requests such as add-to-cart, and the Flutterwave
+        // payment return, so a paying customer never lands on "Too many requests".
+        RateLimiter::for('web', function (Request $request) {
+            if ($request->is('admin', 'admin/*') || $request->ajax() || $request->routeIs('verify.pay', 'confirm.payment')) {
+                return Limit::none();
+            }
 
-        // Product pages are what scrapers crawl most.
-        RateLimiter::for('product', fn (Request $request) => Limit::perMinute(config('sofar.rate_limits.product_pages_per_minute'))
-            ->by('product|'.$this->visitorKey($request)));
+            return Limit::perMinutes(
+                config('sofar.rate_limits.pages.minutes'),
+                config('sofar.rate_limits.pages.requests'),
+            )->by('web|'.$this->visitorKey($request))
+                // Over the limit: remember the IP (blocked_visitors) and show the "Too many requests" page.
+                ->response(function (Request $request, array $headers) {
+                    BlockedVisitor::record($request);
+
+                    return response()->view('errors.429', [], 429, $headers);
+                });
+        });
 
         // Login attempts per email + IP (customer and admin logins).
         RateLimiter::for('login', fn (Request $request) => Limit::perMinutes(

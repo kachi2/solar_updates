@@ -27,8 +27,9 @@ return [
     // Request limits (see AppServiceProvider::configureRateLimits). Over the limit,
     // visitors get the "Too many requests" page (resources/views/errors/429.blade.php).
     'rate_limits' => [
-        'pages_per_minute' => 15,
-        'product_pages_per_minute' => 10,
+        // Page views per visitor (product pages included). Admin pages, background
+        // (AJAX) cart requests and the payment return page are not counted.
+        'pages' => ['requests' => 10, 'minutes' => 1],
         'login' => ['attempts' => 3, 'minutes' => 5],
         'register' => ['attempts' => 3, 'minutes' => 5],
     ],
