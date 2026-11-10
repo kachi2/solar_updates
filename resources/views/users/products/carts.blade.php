@@ -56,7 +56,7 @@
                             @endphp
                             <li class="sofar-cart-item">
                                 <a href="{{ $productUrl }}" class="sofar-cart-item__thumb">
-                                    <img src="{{ Media::url(Media::PRODUCTS, $product->image ?? $item->attributes->image) }}" alt="{{ $item->name }}" loading="lazy">
+                                    <img src="{{ Media::sized(Media::PRODUCTS, $product->image ?? $item->attributes->image, 480) }}" alt="{{ $item->name }}" loading="lazy">
                                 </a>
 
                                 <div class="sofar-cart-item__info">

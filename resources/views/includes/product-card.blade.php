@@ -20,7 +20,7 @@
         @if ($discount > 0)
             <span class="sofar-product-card__badge">-{{ $discount }}%</span>
         @endif
-        <img class="sofar-product-card__img" src="{{ $product->image_url }}" alt="{{ $product->name }}" loading="lazy">
+        <img class="sofar-product-card__img" src="{{ $product->imageSized(480) }}" alt="{{ $product->name }}" loading="lazy">
     </a>
 
     <div class="sofar-product-card__body">

@@ -42,7 +42,7 @@
                             <a href="{{ $photoUrl($photo) }}" data-fancybox="project-gallery" data-caption="{{ $project->title }}"
                                @class(['sofar-project-gallery__item', 'sofar-project-gallery__item--main' => $loop->first])
                                aria-label="Open photo {{ $loop->iteration }} of {{ $photos->count() }}">
-                                <img src="{{ $photoUrl($photo) }}" alt="{{ $project->title }}, photo {{ $loop->iteration }}" loading="{{ $loop->first ? 'eager' : 'lazy' }}">
+                                <img src="{{ Media::sized(Media::PROJECTS, $photo, $loop->first ? 1200 : 480) }}" alt="{{ $project->title }}, photo {{ $loop->iteration }}" loading="{{ $loop->first ? 'eager' : 'lazy' }}">
                             </a>
                         @endforeach
                     </div>

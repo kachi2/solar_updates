@@ -39,7 +39,7 @@
                                     <li>
                                         <a href="{{ route('product-details', $prods) }}" class="sofar-mini-product">
                                             <span class="sofar-mini-product__thumb">
-                                                <img src="{{ $prods->image_url }}" alt="" loading="lazy">
+                                                <img src="{{ $prods->imageSized(480) }}" alt="" loading="lazy">
                                             </span>
                                             <span class="sofar-mini-product__info">
                                                 <span class="sofar-mini-product__name">{{ $prods->name }}</span>

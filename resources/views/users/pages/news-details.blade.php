@@ -37,7 +37,7 @@
 
             @if ($news->image)
                 <figure class="sofar-article__cover">
-                    <img src="{{ $imageUrl($news->image) }}" alt="{{ $news->title }}">
+                    <img src="{{ $news->imageSized(1200) }}" alt="{{ $news->title }}">
                 </figure>
             @endif
 
@@ -49,7 +49,7 @@
                 <div class="sofar-article__photos">
                     @foreach ($extraPhotos as $photo)
                         <a href="{{ $imageUrl($photo) }}" data-fancybox="article-gallery" data-caption="{{ $news->title }}" class="sofar-project-gallery__item" aria-label="Open photo {{ $loop->iteration }}">
-                            <img src="{{ $imageUrl($photo) }}" alt="{{ $news->title }}, photo {{ $loop->iteration }}" loading="lazy">
+                            <img src="{{ Media::sized(Media::NEWS, $photo, 480) }}" alt="{{ $news->title }}, photo {{ $loop->iteration }}" loading="lazy">
                         </a>
                     @endforeach
                 </div>

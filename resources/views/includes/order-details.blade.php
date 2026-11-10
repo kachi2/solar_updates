@@ -24,7 +24,7 @@
             <li class="sofar-order__item">
                 <span class="sofar-order__thumb">
                     @if ($item->image)
-                        <img src="{{ $item->image_url }}" alt="" loading="lazy">
+                        <img src="{{ $item->imageSized(480) }}" alt="" loading="lazy">
                     @else
                         <i class="ec ec-shopping-bag" aria-hidden="true"></i>
                     @endif

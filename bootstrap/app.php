@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn (Request $request) => $request->is('admin', 'admin/*')
             ? route('admin.index')
             : route('index'));
+
+        // Site-wide per-IP page limit ("web" limiter, AppServiceProvider).
+        $middleware->appendToGroup('web', 'throttle:web');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

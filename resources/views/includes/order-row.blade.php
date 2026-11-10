@@ -12,7 +12,7 @@
             @forelse ($order->items->take(3) as $item)
                 <span class="sofar-orders__thumb">
                     @if ($item->image)
-                        <img src="{{ $item->image_url }}" alt="" loading="lazy">
+                        <img src="{{ $item->imageSized(480) }}" alt="" loading="lazy">
                     @else
                         <i class="ec ec-shopping-bag"></i>
                     @endif

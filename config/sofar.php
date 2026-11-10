@@ -24,6 +24,15 @@ return [
         'reference_prefix' => 'SFSL',
     ],
 
+    // Request limits (see AppServiceProvider::configureRateLimits). Over the limit,
+    // visitors get the "Too many requests" page (resources/views/errors/429.blade.php).
+    'rate_limits' => [
+        'pages_per_minute' => 120,
+        'product_pages_per_minute' => 60,
+        'login' => ['attempts' => 3, 'minutes' => 5],
+        'register' => ['attempts' => 3, 'minutes' => 5],
+    ],
+
     // Items per page.
     'per_page' => [
         'home_products' => 50,

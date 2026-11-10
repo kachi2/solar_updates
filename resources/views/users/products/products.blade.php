@@ -44,7 +44,7 @@
                             <div class="sofar-pd-gallery">
                                 <div class="sofar-pd-gallery__main">
                                    
-                                    <img id="sofarPdMainImage" src="{{ Media::url(Media::PRODUCTS, $images->first()) }}" alt="{{ $product->name }}">
+                                    <img id="sofarPdMainImage" src="{{ Media::sized(Media::PRODUCTS, $images->first(), 480) }}" alt="{{ $product->name }}">
                                 </div>
                             </div>
                             <!-- Tabs -->

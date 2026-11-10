@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\ImageVariants;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -23,11 +24,12 @@ class ImageUploadService
 
         if ($width === null || $height === null) {
             $file->move($target, $fileName);
-
-            return $fileName;
+        } else {
+            $this->resize($file->getRealPath(), $target.DIRECTORY_SEPARATOR.$fileName, $width, $height);
         }
 
-        $this->resize($file->getRealPath(), $target.DIRECTORY_SEPARATOR.$fileName, $width, $height);
+        // Web-sized WebP copies used by the shop pages (see Media::WIDTHS).
+        ImageVariants::generate(trim($directory, '/'), $fileName);
 
         return $fileName;
     }

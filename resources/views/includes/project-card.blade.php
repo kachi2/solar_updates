@@ -11,7 +11,7 @@
     <a href="{{ $projectUrl }}" class="sofar-project-card__link">
         <span class="sofar-project-card__media">
             @if ($project->image)
-                <img src="{{ $project->image_url }}" alt="{{ $project->title }}" loading="lazy">
+                <img src="{{ $project->imageSized(480) }}" alt="{{ $project->title }}" loading="lazy">
             @endif
             @if ($photoCount > 1)
                 <span class="sofar-project-card__photos"><i class="fas fa-camera" aria-hidden="true"></i> {{ $photoCount }}</span>

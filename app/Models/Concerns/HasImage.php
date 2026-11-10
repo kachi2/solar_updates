@@ -17,4 +17,12 @@ trait HasImage
     {
         return Attribute::get(fn () => Media::url($this->imageFolder(), $this->image));
     }
+
+    /**
+     * Web-sized copy of the image (≤ $width px), or the original if none exists yet.
+     */
+    public function imageSized(int $width): ?string
+    {
+        return Media::sized($this->imageFolder(), $this->image, $width);
+    }
 }

@@ -3,7 +3,6 @@
 @section('content')
 @php
     $excerpt = fn ($post, $limit) => \Illuminate\Support\Str::limit(trim(html_entity_decode(strip_tags((string) $post->content))), $limit);
-    $imageUrl = fn ($post) => $post->image_url;
     $featured = $news->first();
     $others = $news->slice(1);
 @endphp
@@ -33,7 +32,7 @@
                 <a href="{{ route('news.details', $featured) }}" class="sofar-news-featured__link">
                     <span class="sofar-news-featured__media">
                         @if ($featured->image)
-                            <img src="{{ $imageUrl($featured) }}" alt="{{ $featured->title }}">
+                            <img src="{{ $featured->imageSized(1200) }}" alt="{{ $featured->title }}">
                         @endif
                     </span>
                     <span class="sofar-news-featured__body">

@@ -105,7 +105,7 @@
                             @foreach ($cart as $item)
                                 <li>
                                     <span class="sofar-checkout-lines__thumb">
-                                        <img src="{{ Media::url(Media::PRODUCTS, $item->model->image ?? $item->attributes->image) }}" alt="" loading="lazy">
+                                        <img src="{{ Media::sized(Media::PRODUCTS, $item->model->image ?? $item->attributes->image, 480) }}" alt="" loading="lazy">
                                         <span class="sofar-checkout-lines__qty">{{ $item->quantity }}</span>
                                     </span>
                                     <span class="sofar-checkout-lines__name">{{ $item->name }}</span>

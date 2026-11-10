@@ -5,7 +5,7 @@
 <main id="content" role="main">
 	<!-- Slider Section -->
 	<div class="mb-5">
-		<div class="bg-img-hero" style="background-image: url('{{asset('/images/sliders/'.$sliders->first()?->image)}}'); ">
+		<div class="bg-img-hero" style="background-image: url('{{ $sliders->first()?->imageSized(1600) }}'); ">
 			<div class="container min-height-500 overflow-hidden">
 				<div class="js-slick-carousel u-slick" data-autoplay="false" data-speed="50" 
 					data-pagi-classes="text-center position-absolute right-0 bottom-0 left-0 u-slick__pagination u-slick__pagination--long justify-content-start mb-3 mb-md-4 offset-xl-5 pl-2 pb-1">
@@ -73,7 +73,7 @@
 							"slidesToShow": 1
 						}
 					}]'>
-								<img class="img-fluid" src="{{asset('/images/sliders/'.$slider->image)}}" alt="Image Description">
+								<img class="img-fluid" src="{{ $slider->imageSized(1600) }}" loading="lazy" alt="Image Description">
 							</div>
 						</div>
 					</div>
@@ -92,7 +92,7 @@
 				<div class="col-md-6 mb-4 mb-xl-0 col-xl-3">
 					<a href="{{route('user.category', $xs)}}" class="sofar-cat-card">
 						<span class="sofar-cat-card__media">
-							<img class="sofar-cat-card__img" src="{{asset('/images/category/'.$xs->image)}}" alt="{{ $xs->name }}" loading="lazy">
+							<img class="sofar-cat-card__img" src="{{ $xs->imageSized(240) }}" alt="{{ $xs->name }}" loading="lazy">
 						</span>
 						<span class="sofar-cat-card__body">
 							<span class="sofar-cat-card__eyebrow">Sofar Solar</span>
