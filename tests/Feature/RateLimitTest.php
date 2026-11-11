@@ -51,26 +51,29 @@ class RateLimitTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'bot9@example.com']);
     }
 
-    public function test_pages_are_limited_to_twenty_per_ten_minutes(): void
+    public function test_pages_are_limited_by_the_configured_limit(): void
     {
+        // Follows config/sofar.php, whatever the numbers are set to.
+        $requests = (int) config('sofar.rate_limits.pages.requests');
+        $minutes = (int) config('sofar.rate_limits.pages.minutes');
         $product = $this->createProduct();
 
         // Product pages count as pages too.
-        for ($i = 0; $i < 10; $i++) {
-            $this->get('/pages/news')->assertOk();
-            $this->get(route('product-details', $product))->assertOk();
+        for ($i = 0; $i < $requests; $i++) {
+            $this->get($i % 2 ? route('product-details', $product) : '/pages/news')->assertOk();
         }
 
         $this->get('/pages/news')->assertStatus(429)->assertHeader('Retry-After');
 
-        // After the 10-minute window the visitor can browse again.
-        $this->travel(11)->minutes();
+        // After the window the visitor can browse again.
+        $this->travel($minutes * 60 + 1)->seconds();
         $this->get('/pages/news')->assertOk();
     }
 
     public function test_blocked_visitors_are_recorded_with_their_ip_range(): void
     {
-        config(['sofar.rate_limits.pages.requests' => 2]);
+        // A long window, so the bot is still blocked after the 5-minute recording gap.
+        config(['sofar.rate_limits.pages' => ['requests' => 2, 'minutes' => 30]]);
         $bot = ['REMOTE_ADDR' => '203.0.113.57'];
 
         for ($i = 0; $i < 6; $i++) {

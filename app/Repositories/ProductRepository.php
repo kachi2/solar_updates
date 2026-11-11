@@ -21,12 +21,12 @@ class ProductRepository
 
     public function latestPaginated(int $perPage): Paginator
     {
-        return Product::visible()->latest()->simplePaginate($perPage);
+        return Product::visible()->latest()->latest('id')->simplePaginate($perPage);
     }
 
     public function latestLengthAware(int $perPage): LengthAwarePaginator
     {
-        return Product::visible()->latest()->paginate($perPage);
+        return Product::visible()->latest()->latest('id')->paginate($perPage);
     }
 
     /**
@@ -47,12 +47,12 @@ class ProductRepository
 
     public function inCategory(Category $category, int $perPage): Paginator
     {
-        return Product::visible()->where('category_id', $category->id)->simplePaginate($perPage);
+        return Product::visible()->where('category_id', $category->id)->latest()->latest('id')->simplePaginate($perPage);
     }
 
     public function search(string $term, int $perPage): Paginator
     {
-        return Product::visible()->where('name', 'like', '%'.$term.'%')->simplePaginate($perPage)->withQueryString();
+        return Product::visible()->where('name', 'like', '%'.$term.'%')->latest()->latest('id')->simplePaginate($perPage)->withQueryString();
     }
 
     /**
@@ -62,7 +62,7 @@ class ProductRepository
      */
     public function related(Product $product, int $limit): Collection
     {
-        return Product::visible()->where('category_id', $product->category_id)->whereKeyNot($product->id)->take($limit)->get();
+        return Product::visible()->where('category_id', $product->category_id)->whereKeyNot($product->id)->latest()->take($limit)->get();
     }
 
     /**

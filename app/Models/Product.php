@@ -71,6 +71,14 @@ class Product extends Model
         return (float) $this->sale_price > 0;
     }
 
+    /**
+     * Added in the last 30 days: product cards show a "New" badge (unless there is a discount badge).
+     */
+    public function isNew(): bool
+    {
+        return $this->created_at !== null && $this->created_at->gt(now()->subDays(30));
+    }
+
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class, 'sub_category_id');

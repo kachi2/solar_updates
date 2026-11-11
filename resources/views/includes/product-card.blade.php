@@ -20,6 +20,8 @@
     <a href="{{ $detailsUrl }}" class="sofar-product-card__media" aria-label="{{ $product->name }}">
         @if ($discount > 0)
             <span class="sofar-product-card__badge">-{{ $discount }}%</span>
+        @elseif ($product->isNew())
+            <span class="sofar-product-card__badge sofar-product-card__badge--new">New</span>
         @endif
         <img class="sofar-product-card__img" src="{{ $product->imageSized(480) }}" alt="{{ $product->name }}" loading="lazy">
     </a>

@@ -38134,6 +38134,13 @@ blockquote:not(.blockquote) p {
   line-height: 1.2;
 }
 
+/* "New" badge: products added in the last 30 days (Product::isNew) */
+.sofar-product-card__badge--new {
+  background-color: #103178;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
 /* Text */
 .sofar-product-card__body {
   display: flex;

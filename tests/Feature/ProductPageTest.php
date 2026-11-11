@@ -216,6 +216,16 @@ class ProductPageTest extends TestCase
         $this->get('/pages/products')->assertOk()->assertDontSee('Street Light 60w')->assertDontSee('Street Lights');
     }
 
+    public function test_new_products_get_a_new_badge_unless_discounted(): void
+    {
+        $this->createProduct(['name' => 'Fresh Battery', 'price' => 100, 'sale_price' => 100]);
+        $this->get('/pages/products')->assertOk()->assertSee('sofar-product-card__badge--new', false);
+
+        // After 30 days it is no longer new.
+        $this->travel(31)->days();
+        $this->get('/pages/products')->assertOk()->assertDontSee('sofar-product-card__badge--new', false);
+    }
+
     public function test_products_without_a_price_offer_learn_more_and_whatsapp_only(): void
     {
         $product = $this->createProduct(['name' => 'SF-16KWH-L1 Battery', 'price' => 0, 'sale_price' => 0]);
