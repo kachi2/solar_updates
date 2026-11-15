@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -9,6 +10,12 @@ use Illuminate\Support\Str;
 
 /**
  * A visitor (IP + browser) that hit the page limit. Used to find bot IP ranges.
+ *
+ * Guests recorded `sofar.blocklist.after_recordings` times are blocked for good:
+ * a key is written to the FILE cache and BlockListedVisitors checks that key on
+ * every request. The check never touches MySQL (CACHE_STORE is the database).
+ * Unblock: php artisan visitors:unblock {ip}. Restore keys from this table after
+ * the file cache was wiped: php artisan visitors:sync-blocklist.
  */
 class BlockedVisitor extends Model
 {
@@ -55,6 +62,49 @@ class BlockedVisitor extends Model
             'first_blocked_at' => $visitor->first_blocked_at ?? $now,
             'last_blocked_at' => $now,
         ])->save();
+
+        // Logged-in customers are never blocked; they are only logged here.
+        if (! $request->user() && $visitor->times_blocked >= static::blockAfter()) {
+            static::block($ip, $hash);
+        }
+    }
+
+    /**
+     * Whether this request's IP + browser is on the block list (one file-cache read).
+     */
+    public static function isBlocked(Request $request): bool
+    {
+        return static::blocklist()->has(
+            static::blockKey((string) $request->ip(), sha1((string) $request->userAgent()))
+        );
+    }
+
+    public static function block(string $ip, string $userAgentHash): void
+    {
+        static::blocklist()->forever(static::blockKey($ip, $userAgentHash), true);
+    }
+
+    public static function unblock(string $ip, string $userAgentHash): void
+    {
+        static::blocklist()->forget(static::blockKey($ip, $userAgentHash));
+    }
+
+    public static function blockAfter(): int
+    {
+        return max(1, (int) config('sofar.blocklist.after_recordings'));
+    }
+
+    private static function blockKey(string $ip, string $userAgentHash): string
+    {
+        return 'blocklist|'.$ip.'|'.$userAgentHash;
+    }
+
+    /**
+     * The block list lives in the file cache, not the default (database) cache.
+     */
+    private static function blocklist(): Repository
+    {
+        return Cache::store('file');
     }
 
     /**

@@ -108,21 +108,16 @@ Route::prefix('admin')->group(function () {
 Route::get('/', [HomeController::class, 'index'])->name('index');
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/product/{product:slug}', [HomeController::class, 'productDetails'])->name('product-details');
-// Old encrypted-id links (already shared/bookmarked) redirect permanently to the slug URL.
-Route::get('/products/details/{id}', [HomeController::class, 'legacyProductDetails'])->name('product-details.legacy');
-// /category/{slug}; old encrypted-id links on the same path redirect to the slug (see HomeController::category).
+
 Route::get('/category/{category}', [HomeController::class, 'category'])->name('user.category');
 Route::get('/page/search', [HomeController::class, 'search'])->name('search');
 // At most 5 reviews per visitor per hour (anti-spam).
 Route::post('/add-review/{product}', [HomeController::class, 'addReview'])->middleware('throttle:5,60')->name('review.store');
 
 Route::get('/pages/{slug}', [PagesController::class, 'show'])->name('pages');
-// Old encrypted-id links redirect permanently to the slug URL (declared first: more specific path).
-Route::get('/news/details/{id}', [PagesController::class, 'legacyNewsDetails'])->name('news.details.legacy');
+
 Route::get('/news/{news:slug}', [PagesController::class, 'newsDetails'])->name('news.details');
 Route::get('/project/{project:slug}', [PagesController::class, 'projectsDetails'])->name('projects.details');
-// Old encrypted-id links redirect permanently to the slug URL.
-Route::get('/projects/details/{id}', [PagesController::class, 'legacyProjectDetails'])->name('projects.details.legacy');
 
 Route::get('/cart/{id}', [CartController::class, 'add'])->name('carts.add');
 Route::get('/delete/{id}', [CartController::class, 'remove'])->name('carts.delete');

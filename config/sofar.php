@@ -34,6 +34,13 @@ return [
         'register' => ['attempts' => 3, 'minutes' => 5],
     ],
 
+    // Guests (IP + browser) that hit the page limit this many times (at most one
+    // recording per 5 minutes, see BlockedVisitor::record) are blocked permanently.
+    // Unblock with: php artisan visitors:unblock {ip}
+    'blocklist' => [
+        'after_recordings' => 3,
+    ],
+
     // Items per page.
     'per_page' => [
         'home_products' => 50,

@@ -22,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ? route('admin.index')
             : route('index'));
 
+        // Block-listed visitors are turned away first (file cache, no DB query).
+        $middleware->prependToGroup('web', \App\Http\Middleware\BlockListedVisitors::class);
+
         // Site-wide per-IP page limit ("web" limiter, AppServiceProvider).
         $middleware->appendToGroup('web', 'throttle:web');
     })
