@@ -5,10 +5,6 @@
 
     RewriteEngine On
 
-    # Old encrypted-ID URLs (routes removed). Bots hit them from thousands of
-    # IPs; answer 410 Gone here so PHP and MySQL never run.
-    RewriteRule ^(products|projects|news)/details/ - [G,L]
-
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
